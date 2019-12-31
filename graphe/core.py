@@ -1,4 +1,5 @@
 from datetime import datetime
+import xml.etree.ElementTree as et
 
 
 class GContributor (object):
@@ -24,6 +25,7 @@ class GContentElement (object):
         self.subelements = []
 
         self.styleClass = ""
+        self.style = ""
 
 
 class GParagraph (GContentElement):
@@ -130,3 +132,27 @@ class GDocument (object):
         self.publicationDate = datetime.now()
         self.templates = []
         self.sections = []
+
+class GImporter (object):
+
+    def importDocument(self, filePath):
+
+        tree = et.parse(filePath)
+        root = tree.getroot()
+
+        document = GDocument()
+
+        self._importMetadata(root, document)
+
+    def _importMetadata(self, root, document):
+        version = root.attrib["version"]
+        title = root.findall("/document/title").text
+        subtitle = root.findall("/document/subtitle").text
+        abstract = root.findall("/document/abstract").text
+        keywords = root.findall("/document/keywords").text
+
+        document.version = version
+        document.title = title
+        document.subtitle = subtitle
+        document.abstract = abstract
+        document.keywords = [k.strip() for k in keywords.split(",")]
