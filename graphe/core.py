@@ -1,3 +1,14 @@
+from datetime import datetime
+
+
+class GContributor (object):
+    def __init__(self):
+
+        self.name = ""
+        self.type = ""
+        self.emailAddress = ""
+        self.address = ""
+        self.website = ""
 
 
 class GTextElement (object):
@@ -76,3 +87,46 @@ class GListItem (GContentElement):
     def __init__(self):
 
         self._elementNames = ["list-item", "li"]
+
+
+class GTemplate (GContentElement):
+    def __init__(self):
+        super(GContentElement, self).__init__()
+
+        self.reference = ""
+
+
+class GPageTemplate (GTemplate):
+    def __init__(self):
+        super(GPageTemplate, self).__init__()
+
+
+class GSection (GContentElement):
+    def __init__(self):
+        super(GSection, self).__init__()
+
+        self._elementNames = ["section"]
+
+        self.document = None
+
+        self.pageTemplateReference = ""
+
+    @property
+    def pageTemplate(self):
+        if self.document != None:
+            return [pt for pt in self.document.templates if pt.reference == self.pageTemplateReference][0]
+        else:
+            return None
+
+
+class GDocument (object):
+    def __init__(self):
+        self.version = ""
+        self.title = ""
+        self.subtitle = ""
+        self.abstract = ""
+        self.keywords = []
+        self.contributors = []
+        self.publicationDate = datetime.now()
+        self.templates = []
+        self.sections = []
