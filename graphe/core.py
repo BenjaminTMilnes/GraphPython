@@ -1,5 +1,11 @@
 
 
+class GTextElement (object):
+    def __init__(self, text=""):
+
+        self.text = text
+
+
 class GContentElement (object):
     def __init__(self):
 
@@ -46,3 +52,27 @@ class GStrikethrough (GContentElement):
     def __init__(self):
 
         self._elementNames = ["strikethrough", "s"]
+
+
+class GPageBreak (GContentElement):
+    def __init__(self):
+
+        self._elementNames = ["page-break", "pb"]
+
+
+class GUnorderedList (GContentElement):
+    def __init__(self):
+
+        self._elementNames = ["unordered-list", "ul"]
+
+
+class GOrderedList (GContentElement):
+    def __init__(self):
+
+        self._elementNames = ["ordered-list", "ol"]
+
+
+class GListItem (GContentElement):
+    def __init__(self):
+
+        self._elementNames = ["list-item", "li"]
