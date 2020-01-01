@@ -1,5 +1,6 @@
 from datetime import datetime
 import xml.etree.ElementTree as et
+import re
 
 
 class GContributor(object):
@@ -24,6 +25,7 @@ class GContentElement(object):
         self._elementNames = []
         self.subelements = []
 
+        self.id = ""
         self.styleClass = ""
         self.style = ""
 
@@ -208,6 +210,9 @@ class GImporter(object):
 
             document.sections.append(s)
 
+    def _compressWhiteSpace(self, text):
+        return re.sub(r"\s+", " ", text)
+
     def _getPageElementsFromXML(self, xmlElements):
         return [self._getPageElementFromXML(e) for e in xmlElements]
 
@@ -242,12 +247,23 @@ class GImporter(object):
         if e == None:
             raise GrapheValidationError("<{0}> is not a valid element type.".format(xmlElement.tag))
 
+        if "id" in xmlElement.attrib:
+            e.id = xmlElement.attrib["id"]
+
+        if "style" in xmlElement.attrib:
+            e.style = xmlElement.attrib["style"]
+
+        if "style-class" in xmlElement.attrib:
+            e.styleClass = xmlElement.attrib["style-class"]
+
         xmlSubelements = xmlElement.findall("*")
         text = "".join(xmlElement.itertext())
 
         if len(xmlSubelements) > 0:
             e.subelements = self._getPageElementsFromXML()
         elif text != "":
+            text = self._compressWhiteSpace(text)
+
             t = GTextElement(text)
 
             e.subelements.append(t)
