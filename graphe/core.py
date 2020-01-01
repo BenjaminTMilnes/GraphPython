@@ -133,8 +133,15 @@ class GDocument(object):
         self.templates = []
         self.sections = []
 
+class GrapheValidationError (Exception):
+    def __init__(self, message):
+        super(GrapheValidationError, self).__init__(message)
 
 class GImporter(object):
+    def __init__(self):
+
+        self.allowedDocumentVersions = ["0.1"]
+
     def importDocument(self, filePath):
 
         tree = et.parse(filePath)
@@ -149,25 +156,41 @@ class GImporter(object):
 
     def _importMetadata(self, root, document):
 
-        if "version" in root.attrib:
-            version = root.attrib["version"]
-            document.version = version
+        if root.tag != "document":
+            raise GrapheValidationError("The root element in a Graphe document file must be a <document> element.")
 
-        if len(root.findall("./title")) > 0:
-            title = "".join(root.findall("./title")[0].itertext()).strip()
-            document.title = title
+        if "version" not in root.attrib:
+            raise GrapheValidationError("The <document> element must have a 'version' attribute.")
+
+        version = root.attrib["version"]
+
+        if version not in self.allowedDocumentVersions:
+            raise GrapheValidationError("'{0}' is not a valid Graphe version.".format(version))
+
+        document.version = version
+
+        title = root.find("./title")
+        subtitle = root.find("./subtitle")
+        abstract = root.find("./abstract")
+        keywords = root.find("./keywords")
+
+        if title == None:
+            raise GrapheValidationError("A Graphe document must have a title.")
+
+        title_text = "".join(title.itertext()).strip()
+        document.title = title_text
             
-        if len(root.findall("./subtitle")) > 0:
-            subtitle = "".join(root.findall("./subtitle")[0].itertext()).strip()
-            document.subtitle = subtitle
+        if subtitle != None:
+            subtitle_text = "".join(subtitle.itertext()).strip()
+            document.subtitle = subtitle_text
 
-        if len(root.findall("./abstract")) > 0:
-            abstract = "".join(root.findall("./abstract")[0].itertext()).strip()
-            document.abstract = abstract
+        if abstract != None:
+            abstract_text = "".join(abstract.itertext()).strip()
+            document.abstract = abstract_text
 
-        if len(root.findall("./keywords")) > 0:
-            keywords = "".join(root.findall("./keywords")[0].itertext()).strip()
-            document.keywords = [k.strip() for k in keywords.split(",")]
+        if keywords != None:
+            keywords_text = "".join(keywords.itertext()).strip()
+            document.keywords = [k.strip() for k in keywords_text.split(",")]
 
     def _importSections(self, root, document):
 
