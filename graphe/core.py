@@ -31,13 +31,14 @@ class GContentElement(object):
         self.style = ""
         self.language = ""
 
+
 class GParagraph(GContentElement):
     _elementNames = ["paragraph", "p"]
 
 
 class GHeading(GContentElement):
     _elementNames = ["heading1", "heading2", "heading3", "heading4", "heading5", "heading6", "heading7", "heading8", "heading9", "heading10", "h1", "h2", "h3", "h4", "h5", "h6", "h7", "h8", "h9", "h10"]
-    _levels = [1,2,3,4,5,6,7,8,9,10,1,2,3,4,5,6,7,8,9,10]
+    _levels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
     def __init__(self, level=1):
         super(GHeading, self).__init__()
@@ -47,8 +48,6 @@ class GHeading(GContentElement):
 
 class GBold(GContentElement):
     _elementNames = ["bold", "b"]
-
-
 
 
 class GItalic(GContentElement):
@@ -62,6 +61,7 @@ class GUnderline(GContentElement):
 class GStrikethrough(GContentElement):
     _elementNames = ["strikethrough", "s"]
 
+
 class GHyperlink(GContentElement):
 
     _elementNames = ["hyperlink", "hl"]
@@ -69,6 +69,7 @@ class GHyperlink(GContentElement):
     def __init__(self):
         self.url = ""
         self.title = ""
+
 
 class GPageBreak(GContentElement):
     _elementNames = ["page-break", "pb"]
@@ -236,10 +237,10 @@ class GImporter(object):
             e = GListItem()
         if xmlElement.tag in GHyperlink._elementNames:
             e = GHyperlink()
-                
+
             if "url" in xmlElement.attrib:
                 e.url = xmlElement.attrib["url"]
-                
+
             if "title" in xmlElement.attrib:
                 e.title = xmlElement.attrib["title"]
 
@@ -272,5 +273,15 @@ class GImporter(object):
             t = GTextElement(text)
 
             e.subelements.append(t)
+
+        if (isinstance(e, GParagraph) or isinstance(e, GHeading)) and len(e.subelements) > 0:
+            fse = e.subelements[0]
+            lse = e.subelements[-1]
+
+            if isinstance(fse, GTextElement):
+                fse.text = fse.text.lstrip()
+
+            if isinstance(lse, GTextElement):
+                lse.text = lse.text.rstrip()
 
         return e
