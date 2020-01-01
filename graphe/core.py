@@ -20,77 +20,70 @@ class GTextElement(object):
 
 
 class GContentElement(object):
+    _elementNames = []
+
     def __init__(self):
 
-        self._elementNames = []
         self.subelements = []
 
         self.id = ""
         self.styleClass = ""
         self.style = ""
-
+        self.language = ""
 
 class GParagraph(GContentElement):
-    def __init__(self):
-        super(GParagraph, self).__init__()
-
-        self._elementNames = ["paragraph", "p"]
+    _elementNames = ["paragraph", "p"]
 
 
 class GHeading(GContentElement):
+    _elementNames = ["heading1", "heading2", "heading3", "heading4", "heading5", "heading6", "heading7", "heading8", "heading9", "heading10", "h1", "h2", "h3", "h4", "h5", "h6", "h7", "h8", "h9", "h10"]
+    _levels = [1,2,3,4,5,6,7,8,9,10,1,2,3,4,5,6,7,8,9,10]
+
     def __init__(self, level=1):
         super(GHeading, self).__init__()
 
         self.level = level
-        self._elementNames = ["heading{0}".format(self.level), "h{0}".format(self.level)]
 
 
 class GBold(GContentElement):
-    def __init__(self):
+    _elementNames = ["bold", "b"]
 
-        self._elementNames = ["bold", "b"]
+
 
 
 class GItalic(GContentElement):
-    def __init__(self):
-
-        self._elementNames = ["italic", "i"]
+    _elementNames = ["italic", "i"]
 
 
 class GUnderline(GContentElement):
-    def __init__(self):
-
-        self._elementNames = ["underline", "u"]
+    _elementNames = ["underline", "u"]
 
 
 class GStrikethrough(GContentElement):
+    _elementNames = ["strikethrough", "s"]
+
+class GHyperlink(GContentElement):
+
+    _elementNames = ["hyperlink", "hl"]
+
     def __init__(self):
-
-        self._elementNames = ["strikethrough", "s"]
-
+        self.url = ""
+        self.title = ""
 
 class GPageBreak(GContentElement):
-    def __init__(self):
-
-        self._elementNames = ["page-break", "pb"]
+    _elementNames = ["page-break", "pb"]
 
 
 class GUnorderedList(GContentElement):
-    def __init__(self):
-
-        self._elementNames = ["unordered-list", "ul"]
+    _elementNames = ["unordered-list", "ul"]
 
 
 class GOrderedList(GContentElement):
-    def __init__(self):
-
-        self._elementNames = ["ordered-list", "ol"]
+    _elementNames = ["ordered-list", "ol"]
 
 
 class GListItem(GContentElement):
-    def __init__(self):
-
-        self._elementNames = ["list-item", "li"]
+    _elementNames = ["list-item", "li"]
 
 
 class GTemplate(GContentElement):
@@ -106,10 +99,10 @@ class GPageTemplate(GTemplate):
 
 
 class GSection(GContentElement):
+    _elementNames = ["section"]
+
     def __init__(self):
         super(GSection, self).__init__()
-
-        self._elementNames = ["section"]
 
         self.document = None
 
@@ -145,8 +138,6 @@ class GImporter(object):
     def __init__(self):
 
         self.allowedDocumentVersions = ["0.1"]
-        self.headingTags = ["heading1", "heading2", "heading3", "heading4", "heading5", "heading6", "heading7", "heading8", "heading9", "heading10", "h1", "h2", "h3", "h4", "h5", "h6", "h7", "h8", "h9", "h10"]
-        self.headingTagLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
     def importDocument(self, filePath):
 
@@ -218,31 +209,39 @@ class GImporter(object):
 
     def _getPageElementFromXML(self, xmlElement):
 
-        if xmlElement.tag in ["page-break", "pb"]:
+        if xmlElement.tag in GPageBreak._elementNames:
             return GPageBreak()
 
         e = None
 
-        if xmlElement.tag in self.headingTags:
+        if xmlElement.tag in GHeading._elementNames:
             e = GHeading()
-            i = self.headingTags.index(xmlElement.tag)
-            e.level = self.headingTagLevels[i]
-        if xmlElement.tag in ["paragraph", "p"]:
+            i = GHeading._elementNames.index(xmlElement.tag)
+            e.level = GHeading._levels[i]
+        if xmlElement.tag in GParagraph._elementNames:
             e = GParagraph()
-        if xmlElement.tag in ["bold", "b"]:
+        if xmlElement.tag in GBold._elementNames:
             e = GBold()
-        if xmlElement.tag in ["italic", "i"]:
+        if xmlElement.tag in GItalic._elementNames:
             e = GItalic()
-        if xmlElement.tag in ["underline", "u"]:
+        if xmlElement.tag in GUnderline._elementNames:
             e = GUnderline()
-        if xmlElement.tag in ["strikethrough", "s"]:
+        if xmlElement.tag in GStrikethrough._elementNames:
             e = GStrikethrough()
-        if xmlElement.tag in ["ordered-list", "ol"]:
+        if xmlElement.tag in GOrderedList._elementNames:
             e = GOrderedList()
-        if xmlElement.tag in ["unordered-list", "ul"]:
+        if xmlElement.tag in GUnorderedList._elementNames:
             e = GUnorderedList()
-        if xmlElement.tag in ["list-item", "li"]:
+        if xmlElement.tag in GListItem._elementNames:
             e = GListItem()
+        if xmlElement.tag in GHyperlink._elementNames:
+            e = GHyperlink()
+                
+            if "url" in xmlElement.attrib:
+                e.url = xmlElement.attrib["url"]
+                
+            if "title" in xmlElement.attrib:
+                e.title = xmlElement.attrib["title"]
 
         if e == None:
             raise GrapheValidationError("<{0}> is not a valid element type.".format(xmlElement.tag))
@@ -255,6 +254,12 @@ class GImporter(object):
 
         if "style-class" in xmlElement.attrib:
             e.styleClass = xmlElement.attrib["style-class"]
+
+        if "l" in xmlElement.attrib:
+            e.language = xmlElement.attrib["l"]
+
+        if "language" in xmlElement.attrib:
+            e.language = xmlElement.attrib["language"]
 
         xmlSubelements = xmlElement.findall("*")
         text = "".join(xmlElement.itertext())
