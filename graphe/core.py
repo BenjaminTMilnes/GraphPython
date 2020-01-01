@@ -2,7 +2,7 @@ from datetime import datetime
 import xml.etree.ElementTree as et
 
 
-class GContributor (object):
+class GContributor(object):
     def __init__(self):
 
         self.name = ""
@@ -12,13 +12,13 @@ class GContributor (object):
         self.website = ""
 
 
-class GTextElement (object):
+class GTextElement(object):
     def __init__(self, text=""):
 
         self.text = text
 
 
-class GContentElement (object):
+class GContentElement(object):
     def __init__(self):
 
         self._elementNames = []
@@ -28,14 +28,14 @@ class GContentElement (object):
         self.style = ""
 
 
-class GParagraph (GContentElement):
+class GParagraph(GContentElement):
     def __init__(self):
         super(GParagraph, self).__init__()
 
         self._elementNames = ["paragraph", "p"]
 
 
-class GHeading (GContentElement):
+class GHeading(GContentElement):
     def __init__(self, level=1):
         super(GHeading, self).__init__()
 
@@ -43,67 +43,67 @@ class GHeading (GContentElement):
         self._elementNames = ["heading{0}".format(self.level), "h{0}".format(self.level)]
 
 
-class GBold (GContentElement):
+class GBold(GContentElement):
     def __init__(self):
 
         self._elementNames = ["bold", "b"]
 
 
-class GItalic (GContentElement):
+class GItalic(GContentElement):
     def __init__(self):
 
         self._elementNames = ["italic", "i"]
 
 
-class GUnderline (GContentElement):
+class GUnderline(GContentElement):
     def __init__(self):
 
         self._elementNames = ["underline", "u"]
 
 
-class GStrikethrough (GContentElement):
+class GStrikethrough(GContentElement):
     def __init__(self):
 
         self._elementNames = ["strikethrough", "s"]
 
 
-class GPageBreak (GContentElement):
+class GPageBreak(GContentElement):
     def __init__(self):
 
         self._elementNames = ["page-break", "pb"]
 
 
-class GUnorderedList (GContentElement):
+class GUnorderedList(GContentElement):
     def __init__(self):
 
         self._elementNames = ["unordered-list", "ul"]
 
 
-class GOrderedList (GContentElement):
+class GOrderedList(GContentElement):
     def __init__(self):
 
         self._elementNames = ["ordered-list", "ol"]
 
 
-class GListItem (GContentElement):
+class GListItem(GContentElement):
     def __init__(self):
 
         self._elementNames = ["list-item", "li"]
 
 
-class GTemplate (GContentElement):
+class GTemplate(GContentElement):
     def __init__(self):
         super(GContentElement, self).__init__()
 
         self.reference = ""
 
 
-class GPageTemplate (GTemplate):
+class GPageTemplate(GTemplate):
     def __init__(self):
         super(GPageTemplate, self).__init__()
 
 
-class GSection (GContentElement):
+class GSection(GContentElement):
     def __init__(self):
         super(GSection, self).__init__()
 
@@ -121,7 +121,7 @@ class GSection (GContentElement):
             return None
 
 
-class GDocument (object):
+class GDocument(object):
     def __init__(self):
         self.version = ""
         self.title = ""
@@ -134,7 +134,7 @@ class GDocument (object):
         self.sections = []
 
 
-class GImporter (object):
+class GImporter(object):
     def importDocument(self, filePath):
 
         tree = et.parse(filePath)
@@ -148,21 +148,30 @@ class GImporter (object):
         return document
 
     def _importMetadata(self, root, document):
-        version = root.attrib["version"]
-        title = root.findall("/document/title").text
-        subtitle = root.findall("/document/subtitle").text
-        abstract = root.findall("/document/abstract").text
-        keywords = root.findall("/document/keywords").text
 
-        document.version = version
-        document.title = title
-        document.subtitle = subtitle
-        document.abstract = abstract
-        document.keywords = [k.strip() for k in keywords.split(",")]
+        if "version" in root.attrib:
+            version = root.attrib["version"]
+            document.version = version
+
+        if len(root.findall("./title")) > 0:
+            title = "".join(root.findall("./title")[0].itertext()).strip()
+            document.title = title
+            
+        if len(root.findall("./subtitle")) > 0:
+            subtitle = "".join(root.findall("./subtitle")[0].itertext()).strip()
+            document.subtitle = subtitle
+
+        if len(root.findall("./abstract")) > 0:
+            abstract = "".join(root.findall("./abstract")[0].itertext()).strip()
+            document.abstract = abstract
+
+        if len(root.findall("./keywords")) > 0:
+            keywords = "".join(root.findall("./keywords")[0].itertext()).strip()
+            document.keywords = [k.strip() for k in keywords.split(",")]
 
     def _importSections(self, root, document):
 
-        sections = root.findall("/document/sections/section")
+        sections = root.findall("./sections/section")
 
         for section in sections:
             s = GSection()
@@ -203,6 +212,9 @@ class GImporter (object):
             e = GUnorderedList()
         if xmlElement.tag in ["list-item", "li"]:
             e = GListItem()
+
+        if e == None:
+            return
 
         xmlSubelements = xmlElement.findall("*")
         text = "".join(xmlElement.itertext())
