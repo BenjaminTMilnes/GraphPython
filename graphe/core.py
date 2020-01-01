@@ -134,7 +134,6 @@ class GDocument (object):
         self.sections = []
 
 class GImporter (object):
-
     def importDocument(self, filePath):
 
         tree = et.parse(filePath)
@@ -143,6 +142,9 @@ class GImporter (object):
         document = GDocument()
 
         self._importMetadata(root, document)
+        self._importSections(root, document)
+
+        return document
 
     def _importMetadata(self, root, document):
         version = root.attrib["version"]
@@ -156,3 +158,59 @@ class GImporter (object):
         document.subtitle = subtitle
         document.abstract = abstract
         document.keywords = [k.strip() for k in keywords.split(",")]
+
+    def _importSections(self, root, document):
+
+        sections = root.findall("/document/sections/section")
+
+        for section in sections:
+            s = GSection()
+
+            s.document = document
+            s.subelements = self._getPageElementsFromXML(section.findall("*"))
+
+            document.sections.append(s)
+
+    def _getPageElementsFromXML(self, xmlElements):
+        e = []
+
+        for xmlElement in xmlElements:
+            e.append(self._getPageElementFromXML(xmlElement))
+
+        return e
+
+    def _getPageElementFromXML(self, xmlElement):
+
+        if xmlElement.tag in ["page-break", "pb"]:
+            return GPageBreak()
+
+        e = None
+
+        if xmlElement.tag in ["paragraph", "p"]:
+            e = GParagraph()
+        if xmlElement.tag in ["bold", "b"]:
+            e = GBold()
+        if xmlElement.tag in ["italic", "i"]:
+            e = GItalic()
+        if xmlElement.tag in ["underline", "u"]:
+            e = GUnderline()
+        if xmlElement.tag in ["strikethrough", "s"]:
+            e = GStrikethrough()
+        if xmlElement.tag in ["ordered-list", "ol"]:
+            e = GOrderedList()
+        if xmlElement.tag in ["unordered-list", "ul"]:
+            e = GUnorderedList()
+        if xmlElement.tag in ["list-item", "li"]:
+            e = GListItem()
+
+        xmlSubelements = xmlElement.findall("*")
+        text = "".join(xmlElement.itertext())
+
+        if len(xmlSubelements) > 0:
+            e.subelements = self._getPageElementsFromXML()
+        elif text != "":
+            t = GTextElement(text)
+
+            e.subelements.append(t)
+
+        return e
