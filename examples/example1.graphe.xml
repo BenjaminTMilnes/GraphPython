@@ -2,6 +2,15 @@
 <document version="0.1">
   <title>The Tragedy of Darth Plagueis the Wise</title>
   <subtitle>Did you ever hear it?</subtitle>
+  <abstract>It's not a story the Jedi would teach you.</abstract>
+  <keywords>tragedy, Plagueis, Darth Plagueis, Sith</keywords>
+  <contributors>
+    <contributor type="author">
+      <name>Sheev Palpatine</name>
+      <email-address>sheev.palpatine@theevilempire.com</email-address>
+      <address>The Throne Room, The Death Star, Currently over the Forest Moon of Endor</address>
+    </contributor>
+  </contributors>
   <sections>
     <section>
       <h1>Something, something, something ... dark side</h1>
