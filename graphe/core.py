@@ -133,6 +133,7 @@ class GDocument (object):
         self.templates = []
         self.sections = []
 
+
 class GImporter (object):
     def importDocument(self, filePath):
 
