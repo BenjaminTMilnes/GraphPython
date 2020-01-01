@@ -133,14 +133,18 @@ class GDocument(object):
         self.templates = []
         self.sections = []
 
+
 class GrapheValidationError (Exception):
     def __init__(self, message):
         super(GrapheValidationError, self).__init__(message)
+
 
 class GImporter(object):
     def __init__(self):
 
         self.allowedDocumentVersions = ["0.1"]
+        self.headingTags = ["heading1", "heading2", "heading3", "heading4", "heading5", "heading6", "heading7", "heading8", "heading9", "heading10", "h1", "h2", "h3", "h4", "h5", "h6", "h7", "h8", "h9", "h10"]
+        self.headingTagLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
     def importDocument(self, filePath):
 
@@ -179,7 +183,7 @@ class GImporter(object):
 
         title_text = "".join(title.itertext()).strip()
         document.title = title_text
-            
+
         if subtitle != None:
             subtitle_text = "".join(subtitle.itertext()).strip()
             document.subtitle = subtitle_text
@@ -205,12 +209,7 @@ class GImporter(object):
             document.sections.append(s)
 
     def _getPageElementsFromXML(self, xmlElements):
-        e = []
-
-        for xmlElement in xmlElements:
-            e.append(self._getPageElementFromXML(xmlElement))
-
-        return e
+        return [self._getPageElementFromXML(e) for e in xmlElements]
 
     def _getPageElementFromXML(self, xmlElement):
 
@@ -219,6 +218,10 @@ class GImporter(object):
 
         e = None
 
+        if xmlElement.tag in self.headingTags:
+            e = GHeading()
+            i = self.headingTags.index(xmlElement.tag)
+            e.level = self.headingTagLevels[i]
         if xmlElement.tag in ["paragraph", "p"]:
             e = GParagraph()
         if xmlElement.tag in ["bold", "b"]:
@@ -237,7 +240,7 @@ class GImporter(object):
             e = GListItem()
 
         if e == None:
-            return
+            raise GrapheValidationError("<{0}> is not a valid element type.".format(xmlElement.tag))
 
         xmlSubelements = xmlElement.findall("*")
         text = "".join(xmlElement.itertext())
