@@ -71,6 +71,14 @@ class XMLParser(object):
         else:
             return False
 
+    def parseFromFile(self, filePath):
+        with open(filePath, "r") as fo:
+            data = fo.read()
+
+            document = self.parseDocument(data)
+
+            return document
+
     def parseDocument(self, inputText):
         marker = Marker()
 
@@ -93,7 +101,7 @@ class XMLParser(object):
         t = ""
 
         while m.p < len(inputText):
-            c = cut(t, m.p)
+            c = cut(inputText, m.p)
 
             if c not in "<>":
                 t += c
@@ -214,7 +222,7 @@ class XMLParser(object):
         t = ""
 
         while m.p < len(inputText):
-            c = cut(t, m.p)
+            c = cut(inputText, m.p)
 
             if c in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_":
                 t += c
@@ -230,18 +238,19 @@ class XMLParser(object):
     def _getAttribute(self, inputText, marker):
         m = marker.copy()
 
-        whiteSpace = self._getWhiteSpace(inputText, m)
-
-        if whiteSpace == None:
-            return None
+        self._getWhiteSpace(inputText, m)
 
         name = self._getAttributeName(inputText, m)
 
         if name == None:
             return None
 
+        self._getWhiteSpace(inputText, m)
+
         if self._expect("=", inputText, m) == False:
             return None
+
+        self._getWhiteSpace(inputText, m)
 
         value = self._getAttributeValue(inputText, m)
 
@@ -256,7 +265,7 @@ class XMLParser(object):
         t = ""
 
         while m.p < len(inputText):
-            c = cut(t, m.p)
+            c = cut(inputText, m.p)
 
             if c in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_":
                 t += c
@@ -277,7 +286,7 @@ class XMLParser(object):
             return None
 
         while True:
-            c = cut(inputText, m)
+            c = cut(inputText, m.p, len("\""))
             m.p += 1
             if c == "\"":
                 break
@@ -293,7 +302,7 @@ class XMLParser(object):
         t = ""
 
         while m.p < len(inputText):
-            c = cut(t, m.p)
+            c = cut(inputText, m.p)
 
             if c in " \t\n":
                 t += c
