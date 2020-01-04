@@ -291,10 +291,10 @@ class GImporter(object):
             e.level = GHeading._levels[i]
         if xmlElement.tag in GParagraph._elementNames:
             e = GParagraph()
-        if xmlElement.tag in GBold._elementNames:
-            e = GBold()
         if xmlElement.tag in GDivision._elementNames:
             e = GDivision()
+        if xmlElement.tag in GBold._elementNames:
+            e = GBold()
         if xmlElement.tag in GItalic._elementNames:
             e = GItalic()
         if xmlElement.tag in GUnderline._elementNames:
@@ -351,7 +351,7 @@ class GImporter(object):
         if "language" in xmlElement.attrib:
             e.language = xmlElement.attrib["language"]
 
-        xmlSubelements = xmlElement.findall("*")
+        xmlSubelements = list([ se for se in xmlElement])
         text = "".join(xmlElement.itertext())
 
         if len(xmlSubelements) > 0:
@@ -363,7 +363,7 @@ class GImporter(object):
 
             e.subelements.append(t)
 
-        if (isinstance(e, GParagraph) or isinstance(e, GHeading)) and len(e.subelements) > 0:
+        if (isinstance(e, GParagraph) or isinstance(e, GHeading) or isinstance(e, GDivision)) and len(e.subelements) > 0:
             fse = e.subelements[0]
             lse = e.subelements[-1]
 
