@@ -1,6 +1,7 @@
 .vs/*
 *.doc
 *.docx
+load_book.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
