@@ -46,6 +46,10 @@ class GHeading(GContentElement):
         self.level = level
 
 
+class GDivision (GContentElement):
+    _elementNames = ["division", "d"]
+
+
 class GBold(GContentElement):
     _elementNames = ["bold", "b"]
 
@@ -67,8 +71,14 @@ class GHyperlink(GContentElement):
     _elementNames = ["hyperlink", "hl"]
 
     def __init__(self):
+        super(GHyperlink, self).__init__()
+
         self.url = ""
         self.title = ""
+
+
+class GLineBreak(GContentElement):
+    _elementNames = ["line-break", "lb"]
 
 
 class GPageBreak(GContentElement):
@@ -85,6 +95,25 @@ class GOrderedList(GContentElement):
 
 class GListItem(GContentElement):
     _elementNames = ["list-item", "li"]
+
+
+class GVariable(GContentElement):
+    _elementNames = ["variable", "v"]
+
+    def __init__(self):
+        self.name = ""
+
+
+class GTableOfContents(GContentElement):
+    _elementNames = ["table-of-contents", "toc"]
+
+class GCitation(GContentElement):
+    _elementNames = ["citation", "c"]
+
+    def __init__(self):
+        super(GCitation, self).__init__()
+
+        self.reference = ""
 
 
 class GTemplate(GContentElement):
@@ -212,6 +241,8 @@ class GImporter(object):
 
         if xmlElement.tag in GPageBreak._elementNames:
             return GPageBreak()
+        if xmlElement.tag in GLineBreak._elementNames:
+            return GLineBreak()
 
         e = None
 
@@ -223,6 +254,8 @@ class GImporter(object):
             e = GParagraph()
         if xmlElement.tag in GBold._elementNames:
             e = GBold()
+        if xmlElement.tag in GDivision._elementNames:
+            e = GDivision()
         if xmlElement.tag in GItalic._elementNames:
             e = GItalic()
         if xmlElement.tag in GUnderline._elementNames:
@@ -243,6 +276,23 @@ class GImporter(object):
 
             if "title" in xmlElement.attrib:
                 e.title = xmlElement.attrib["title"]
+
+        if xmlElement.tag in GVariable._elementNames:
+            e = GVariable()
+
+            if "name" in xmlElement.attrib:
+                e.name = xmlElement.attrib["name"]
+
+        if xmlElement.tag in GTableOfContents._elementNames:
+            e = GTableOfContents()
+        if xmlElement.tag in GCitation._elementNames:
+            e = GCitation()
+
+            if "r" in xmlElement.attrib:
+                e.reference = xmlElement.attrib["r"]
+
+            if "reference" in xmlElement.attrib:
+                e.reference = xmlElement.attrib["reference"]
 
         if e == None:
             raise GrapheValidationError("<{0}> is not a valid element type.".format(xmlElement.tag))
@@ -266,7 +316,7 @@ class GImporter(object):
         text = "".join(xmlElement.itertext())
 
         if len(xmlSubelements) > 0:
-            e.subelements = self._getPageElementsFromXML()
+            e.subelements = self._getPageElementsFromXML(xmlSubelements)
         elif text != "":
             text = self._compressWhiteSpace(text)
 
