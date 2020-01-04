@@ -2,6 +2,7 @@ from graphe.core import *
 from docx import Document
 from docx.shared import Pt, Mm, RGBColor
 from docx.enum.section import WD_SECTION
+from datetime import datetime
 
 
 class WordExportContext(object):
@@ -62,24 +63,36 @@ class WordExporter(object):
         context = WordExportContext(dx)
 
         for section in document.sections:
-            self.exportSection(section, context)
+            self.exportSection(section, document, context)
 
         dx.save(filePath)
 
-    def exportSection(self, section, context):
+    def exportSection(self, section, document, context):
         context.addSection()
-        self.exportPageElements(section.subelements, context)
+        self.exportPageElements(section.subelements, document, context)
 
-    def exportPageElements(self, pageElements, context):
+    def exportPageElements(self, pageElements, document, context):
         for pageElement in pageElements:
-            self.exportPageElement(pageElement, context)
+            self.exportPageElement(pageElement, document, context)
 
-    def exportPageElement(self, pageElement, context):
+    def exportPageElement(self, pageElement, document, context):
         if isinstance(pageElement, GParagraph):
             context.addParagraph()
-            self.exportPageElements(pageElement.subelements, context)
+            self.exportPageElements(pageElement.subelements, document, context)
         if isinstance(pageElement, GHeading):
             context.addHeading(pageElement.level)
-            self.exportPageElements(pageElement.subelements, context)
+            self.exportPageElements(pageElement.subelements, document, context)
+        if isinstance(pageElement, GDivision):
+            context.addParagraph()
+            self.exportPageElements(pageElement.subelements, document, context)
+        if isinstance(pageElement, GVariable):
+            if pageElement.name == "title":
+                context.addRun(document.title)
+            if pageElement.name == "subtitle":
+                context.addRun(document.subtitle)
+            if pageElement.name == "authorName":
+                context.addRun(document.authorName)
+            if pageElement.name == "currentYear":
+                context.addRun(str(datetime.now().year))
         if isinstance(pageElement, GTextElement):
             context.addRun(pageElement.text)

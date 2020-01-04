@@ -107,6 +107,7 @@ class GVariable(GContentElement):
 class GTableOfContents(GContentElement):
     _elementNames = ["table-of-contents", "toc"]
 
+
 class GCitation(GContentElement):
     _elementNames = ["citation", "c"]
 
@@ -158,6 +159,14 @@ class GDocument(object):
         self.templates = []
         self.sections = []
 
+    @property
+    def authorName(self):
+        a = [c for c in self.contributors if c.type == "author"]
+
+        if len(a) > 0:
+            return a[0].name
+        else:
+            return ""
 
 class GrapheValidationError (Exception):
     def __init__(self, message):
@@ -218,6 +227,36 @@ class GImporter(object):
         if keywords != None:
             keywords_text = "".join(keywords.itertext()).strip()
             document.keywords = [k.strip() for k in keywords_text.split(",")]
+
+        contributors = root.findall("./contributors/contributor")
+
+        for contributor in contributors:
+            c = GContributor()
+
+            if "type" in contributor.attrib:
+                t = contributor.attrib["type"]
+
+                if t.lower() in ["author", "editor"]:
+                    c.type = t.lower()
+                else:
+                    raise GrapheValidationError("'{0}' is not a valid Graphe contributor type.".format(t))
+
+            name = contributor.find("./name")
+            emailAddress = contributor.find("./email-address")
+            address = contributor.find("./address")
+            website = contributor.find("./website")
+
+            if name != None:
+                c.name = "".join(name.itertext()).strip()
+
+            if emailAddress != None:
+                c.emailAddress = "".join(emailAddress.itertext()).strip()
+
+            if address != None:
+                c.address = "".join(address.itertext()).strip()
+
+            if website != None:
+                c.website = "".join(website.itertext()).strip()
 
     def _importSections(self, root, document):
 
