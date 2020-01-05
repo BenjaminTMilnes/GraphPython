@@ -256,6 +256,8 @@ class GImporter(object):
             if website != None:
                 c.website = website.innerText.strip()
 
+            document.contributors.append(c)
+
     def _importSections(self, root, document):
 
         sections = root.getFirstElementWithName("sections", False).getElementsByName("section", False)

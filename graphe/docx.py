@@ -52,6 +52,9 @@ class WordExportContext(object):
         self.currentRun.font.strike = strikethrough
         self.currentRun.font.color.rgb = RGBColor(0x00, 0x00, 0x00)
 
+    def addLineBreak(self):
+        self.currentRun.add_break()
+
 
 class WordExporter(object):
     def __init__(self):
@@ -94,5 +97,9 @@ class WordExporter(object):
                 context.addRun(document.authorName)
             if pageElement.name == "currentYear":
                 context.addRun(str(datetime.now().year))
+        if isinstance(pageElement, GHyperlink):
+            self.exportPageElements(pageElement.subelements, document, context)
         if isinstance(pageElement, GTextElement):
             context.addRun(pageElement.text)
+        if isinstance(pageElement, GLineBreak):
+            context.addLineBreak()
