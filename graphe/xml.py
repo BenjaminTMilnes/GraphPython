@@ -1,7 +1,45 @@
 
-class XMLDeclaration (object):
+class XMLDocument(object):
+    def __init__(self, declaration, root):
+        self.declaration = declaration
+        self.root = root
+
+
+class XMLDeclaration(object):
     def __init__(self):
         self.attributes = []
+
+    def _getAttributeValue(self, attributeName):
+        a = [attribute for attribute in self.attributes if attribute.name == attributeName]
+
+        if len(a) > 0:
+            return a[0].value
+        else:
+            return ""
+
+    def _setAttributeValue(self, attributeName, attributeValue):
+        a = [attribute for attribute in self.attributes if attribute.name == attributeName]
+
+        if len(a) > 0:
+            a[0].value = attributeValue
+        else:
+            self.attributes.append(XMLAttribute(attributeName, attributeValue))
+
+    @property
+    def version(self):
+        return self._getAttributeValue("version")
+
+    @version.setter
+    def version(self, value):
+        self._setAttributeValue("version", value)
+
+    @property
+    def encoding(self):
+        return self._getAttributeValue("encoding")
+
+    @encoding.setter
+    def encoding(self, value):
+        self._setAttributeValue("encoding", value)
 
 
 class XMLAttribute(object):
@@ -20,12 +58,6 @@ class XMLElement(object):
         self.name = name
         self.attributes = []
         self.subelements = []
-
-
-class XMLDocument(object):
-    def __init__(self, declaration, root):
-        self.declaration = declaration
-        self.root = root
 
 
 class Marker(object):
