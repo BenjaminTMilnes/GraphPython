@@ -1,3 +1,5 @@
+import re
+
 
 class XMLDocument(object):
     def __init__(self, declaration, root):
@@ -206,6 +208,9 @@ class XMLParser(object):
         else:
             return False
 
+    def _compressWhiteSpace(self, text):
+        return re.sub(r"\s+", " ", text)
+
     def parseFromFile(self, filePath):
         with open(filePath, "r") as fo:
             data = fo.read()
@@ -221,6 +226,8 @@ class XMLParser(object):
 
         if d == None:
             raise XMLParsingError("Expected XML declaration.")
+
+        self._getWhiteSpace(inputText, marker)
 
         root = self._getElement(inputText, marker)
 
@@ -246,6 +253,8 @@ class XMLParser(object):
 
         if len(t) == 0:
             return None
+
+        t = self._compressWhiteSpace(t)
 
         return XMLTextElement(t)
 
@@ -342,6 +351,12 @@ class XMLParser(object):
                 raise XMLParsingError("Expected closing XML tag </{0}>.".format(name))
 
             marker.p = m.p
+
+            if len(subelements) > 0 and isinstance(subelements[0], XMLTextElement) and subelements[0].text == " ":
+                subelements = subelements[1:]
+
+            if len(subelements) > 0 and isinstance(subelements[-1], XMLTextElement) and subelements[-1].text == " ":
+                subelements = subelements[:-1]
 
             e.subelements = subelements
 

@@ -28,6 +28,9 @@ class TestXML(unittest.TestCase):
         ["id=\"box1\"", "id", "box1"],
         [" id = \"box1\" ", "id", "box1"],
         ["   id   =   \"box1\"   ", "id", "box1"],
+        ["id='box1'", "id", "box1"],
+        [" id = 'box1' ", "id", "box1"],
+        ["   id   =   'box1'   ", "id", "box1"],
     ])
     def test_parse_attribute(self, text, name, value):
         parser = XMLParser()
@@ -42,11 +45,13 @@ class TestXML(unittest.TestCase):
         ["<heading1></heading1>", "heading1", [], 0, ""],
         ["<heading1 id=\"box1\"></heading1>", "heading1", [["id", "box1"]], 0, ""],
         ["<heading1 id=\"box1\" style=\"font-colour: red;\"></heading1>", "heading1", [["id", "box1"], ["style", "font-colour: red;"]], 0, ""],
+        ["<heading1 id='box1'></heading1>", "heading1", [["id", "box1"]], 0, ""],
+        ["<heading1 id='box1' style='font-colour: red;'></heading1>", "heading1", [["id", "box1"], ["style", "font-colour: red;"]], 0, ""],
         ["<heading1>This is some text</heading1>", "heading1", [], 1, "This is some text"],
         ["<heading1 id=\"box1\" style=\"font-colour: red;\">This is some text</heading1>", "heading1", [["id", "box1"], ["style", "font-colour: red;"]], 1, "This is some text"],
-        ["<heading1>This is some text <b>and some more text</b></heading1>", "heading1", [], 2, "This is some text "],
+        ["<heading1>This is some text <b>and some more text</b></heading1>", "heading1", [], 2, "This is some text and some more text"],
     ])
-    def test_parse_element(self, text, name, attributes, n, t):
+    def test_parse_element(self, text, name, attributes, numberOfSubelements, innerText):
         parser = XMLParser()
 
         e = parser._getElement(text, Marker())
@@ -54,9 +59,20 @@ class TestXML(unittest.TestCase):
         self.assertTrue(isinstance(e, XMLElement))
         self.assertEqual(e.name, name)
         self.assertEqual(len(e.attributes), len(attributes))
-        self.assertEqual(len(e.subelements), n)
-        if n > 0:
-            self.assertEqual(e.subelements[0].text, t)
+        self.assertEqual(len(e.subelements), numberOfSubelements)
+        self.assertEqual(e.innerText, innerText)
+
+    def test_parse_example_1(self):
+        parser = XMLParser()
+
+        d = parser.parseFromFile("examples/example1.graphe.xml")
+
+        self.assertEqual(d.root.name, "document")
+        self.assertEqual(d.root.getAttributeValue("version"), "0.1")
+        self.assertTrue(isinstance(d.root.subelements[0], XMLElement))
+        self.assertEqual(d.root.subelements[0].name, "title")
+        self.assertEqual(d.root.subelements[0].innerText, "The Tragedy of Darth Plagueis the Wise")
+
 
 
 if __name__ == "__main__":
