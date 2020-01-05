@@ -4,6 +4,15 @@ class XMLDocument(object):
         self.declaration = declaration
         self.root = root
 
+        self.root.document = self
+        self.root._setDepth()
+
+
+class XMLAttribute(object):
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
+
 
 class XMLDeclaration(object):
     def __init__(self):
@@ -41,23 +50,115 @@ class XMLDeclaration(object):
     def encoding(self, value):
         self._setAttributeValue("encoding", value)
 
+    @property
+    def standalone(self):
+        return self._getAttributeValue("standalone")
 
-class XMLAttribute(object):
-    def __init__(self, name, value):
-        self.name = name
-        self.value = value
-
-
-class XMLTextElement(object):
-    def __init__(self, text=""):
-        self.text = text
+    @standalone.setter
+    def standalone(self, value):
+        self._setAttributeValue("standalone", value)
 
 
 class XMLElement(object):
     def __init__(self, name):
+        self.document = None
+        self.root = None
+        self.superelement = None
+
+        self.depth = 0
+
         self.name = name
         self.attributes = []
         self.subelements = []
+
+    def _setDepth(self, depth=0):
+        self.depth = depth
+
+        for e in self.subelements:
+            e._setDepth(depth + 1)
+
+            e.document = self.document
+
+            if self.root == None:
+                e.root = self
+            else:
+                e.root = self.root
+
+            e.superelement = self
+
+    @property
+    def hasAttributes(self):
+        return len(self.attributes) > 0
+
+    def getAttributeValue(self, attributeName):
+        a = [attribute for attribute in self.attributes if attribute.name == attributeName]
+
+        if len(a) > 0:
+            return a[0].value
+        else:
+            return ""
+
+    def setAttributeValue(self, attributeName, attributeValue):
+        a = [attribute for attribute in self.attributes if attribute.name == attributeName]
+
+        if len(a) > 0:
+            a[0].value = attributeValue
+        else:
+            self.attributes.append(XMLAttribute(attributeName, attributeValue))
+
+    @property
+    def hasSubelements(self):
+        return len(self.subelements) > 0
+
+    @property
+    def firstSubelement(self):
+        if len(self.subelements) > 0:
+            return self.subelements[0]
+        else:
+            return None
+
+    @property
+    def lastSubelement(self):
+        if len(self.subelements) > 0:
+            return self.subelements[-1]
+        else:
+            return None
+
+    def getElementsByName(self, name, anyDepth=True):
+        e = [element for element in self.subelements if isinstance(element, XMLElement) and element.name == name]
+
+        if anyDepth:
+            for element in self.subelements:
+                if isinstance(element, XMLElement):
+                    e += element.getElementsByName(name, anyDepth)
+
+        return e
+
+    @property
+    def innerText(self):
+        t = ""
+
+        for e in self.subelements:
+            if isinstance(e, XMLTextElement):
+                t += e.text
+            elif isinstance(e, XMLElement):
+                t += e.innerText
+
+        return t
+
+
+class XMLTextElement(object):
+    def __init__(self, text=""):
+        self.document = None
+        self.root = None
+        self.superelement = None
+
+        self.depth = 0
+
+        self.text = text
+
+    def _setDepth(self, depth=0):
+        self.depth = depth
 
 
 class Marker(object):
@@ -93,6 +194,8 @@ class XMLParsingError(Exception):
 
 
 class XMLParser(object):
+    _elementNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
+    _attributeNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
 
     def _expect(self, text, inputText, marker):
         c = cut(inputText, marker.p, len(text))
@@ -164,16 +267,14 @@ class XMLParser(object):
 
         self._getWhiteSpace(inputText, m)
 
-        d = XMLDeclaration()
-
-        d.attributes = attributes
-
-        self._getWhiteSpace(inputText, m)
-
         if self._expect("?>", inputText, m) == False:
             raise XMLParsingError("Expected closing bracket ?>.")
 
         marker.p = m.p
+
+        d = XMLDeclaration()
+
+        d.attributes = attributes
 
         return d
 
@@ -256,7 +357,7 @@ class XMLParser(object):
         while m.p < len(inputText):
             c = cut(inputText, m.p)
 
-            if c in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_":
+            if c in XMLParser._elementNameCharacters:
                 t += c
                 m.p += 1
             else:
@@ -299,7 +400,7 @@ class XMLParser(object):
         while m.p < len(inputText):
             c = cut(inputText, m.p)
 
-            if c in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_":
+            if c in XMLParser._attributeNameCharacters:
                 t += c
                 m.p += 1
             else:
@@ -313,14 +414,22 @@ class XMLParser(object):
     def _getAttributeValue(self, inputText, marker):
         m = marker.copy()
         t = ""
+        quoteMarkType = "none"
+        q = ""
 
-        if self._expect("\"", inputText, m) == False:
+        if self._expect("\"", inputText, m) == True:
+            quoteMarkType = "double"
+            q = "\""
+        elif self._expect("'", inputText, m) == True:
+            quoteMarkType = "single"
+            q = "'"
+        else:
             return None
 
         while True:
-            c = cut(inputText, m.p, len("\""))
+            c = cut(inputText, m.p, len(q))
             m.p += 1
-            if c == "\"":
+            if c == q:
                 break
             else:
                 t += c
