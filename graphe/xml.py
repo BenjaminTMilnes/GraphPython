@@ -223,7 +223,7 @@ class XMLParser(object):
         return re.sub(r"\s+", " ", text)
 
     def parseFromFile(self, filePath):
-        with open(filePath, "r") as fo:
+        with open(filePath, "r", encoding="utf-8") as fo:
             data = fo.read()
 
             document = self.parseDocument(data)

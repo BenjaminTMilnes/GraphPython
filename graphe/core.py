@@ -231,10 +231,10 @@ class GImporter(object):
         for contributor in contributors:
             c = GContributor()
 
-            if contributor.hasAttribute("type")
-              t = contributor.getAttributeValue("type")
+            if contributor.hasAttribute("type"):
+                t = contributor.getAttributeValue("type")
 
-               if t.lower() in ["author", "editor"]:
+                if t.lower() in ["author", "editor"]:
                     c.type = t.lower()
                 else:
                     raise GrapheValidationError("'{0}' is not a valid Graphe contributor type.".format(t))

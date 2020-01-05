@@ -8,8 +8,6 @@ document = importer.importDocument("examples/example1.graphe.xml")
 
 print(document.title)
 print(document.subtitle)
-print(document.sections[0].subelements[0].subelements[0].text)
-print(document.sections[0].subelements[1].subelements[0].text)
 
 exporter = WordExporter()
 
