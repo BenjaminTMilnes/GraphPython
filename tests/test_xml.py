@@ -72,7 +72,15 @@ class TestXML(unittest.TestCase):
         self.assertTrue(isinstance(d.root.subelements[0], XMLElement))
         self.assertEqual(d.root.subelements[0].name, "title")
         self.assertEqual(d.root.subelements[0].innerText, "The Tragedy of Darth Plagueis the Wise")
+        self.assertEqual(d.root.subelements[2].name, "subtitle")
+        self.assertEqual(d.root.subelements[2].innerText, "Did you ever hear it?")
+        self.assertEqual(d.root.subelements[4].name, "abstract")
+        self.assertEqual(d.root.subelements[4].innerText, "It's not a story the Jedi would teach you.")
+        self.assertEqual(d.root.subelements[6].name, "keywords")
+        self.assertEqual(d.root.subelements[6].innerText, "tragedy, Plagueis, Darth Plagueis, Sith")
 
+        self.assertEqual(len(d.root.getElementsByName("contributor")), 1)
+        self.assertEqual(d.root.getElementsByName("contributor")[0].getElementsByName("name")[0].innerText, "Sheev Palpatine")
 
 
 if __name__ == "__main__":
