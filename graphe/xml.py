@@ -92,6 +92,9 @@ class XMLElement(object):
     def hasAttributes(self):
         return len(self.attributes) > 0
 
+    def hasAttribute(self, attributeName):
+        return len([a for a in self.attributes if a.name == attributeName]) > 0
+
     def getAttributeValue(self, attributeName):
         a = [attribute for attribute in self.attributes if attribute.name == attributeName]
 
@@ -135,6 +138,14 @@ class XMLElement(object):
                     e += element.getElementsByName(name, anyDepth)
 
         return e
+
+    def getFirstElementWithName(self, name, anyDepth=True):
+        e = self.getElementsByName(name, anyDepth)
+
+        if len(e) > 0:
+            return e[0]
+        else:
+            return None
 
     @property
     def innerText(self):

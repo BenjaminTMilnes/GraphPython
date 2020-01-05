@@ -1,6 +1,7 @@
 from datetime import datetime
 import xml.etree.ElementTree as et
 import re
+from graphe.xml import *
 
 
 class GContributor(object):
@@ -168,6 +169,7 @@ class GDocument(object):
         else:
             return ""
 
+
 class GrapheValidationError (Exception):
     def __init__(self, message):
         super(GrapheValidationError, self).__init__(message)
@@ -179,9 +181,9 @@ class GImporter(object):
         self.allowedDocumentVersions = ["0.1"]
 
     def importDocument(self, filePath):
+        xmlParser = XMLParser()
 
-        tree = et.parse(filePath)
-        root = tree.getroot()
+        root = xmlParser.parseFromFile(filePath).root
 
         document = GDocument()
 
@@ -192,176 +194,141 @@ class GImporter(object):
 
     def _importMetadata(self, root, document):
 
-        if root.tag != "document":
+        if root.name != "document":
             raise GrapheValidationError("The root element in a Graphe document file must be a <document> element.")
 
-        if "version" not in root.attrib:
+        if not root.hasAttribute("version"):
             raise GrapheValidationError("The <document> element must have a 'version' attribute.")
 
-        version = root.attrib["version"]
+        version = root.getAttributeValue("version")
 
         if version not in self.allowedDocumentVersions:
             raise GrapheValidationError("'{0}' is not a valid Graphe version.".format(version))
 
         document.version = version
 
-        title = root.find("./title")
-        subtitle = root.find("./subtitle")
-        abstract = root.find("./abstract")
-        keywords = root.find("./keywords")
+        title = root.getFirstElementWithName("title")
+        subtitle = root.getFirstElementWithName("subtitle")
+        abstract = root.getFirstElementWithName("abstract")
+        keywords = root.getFirstElementWithName("keywords")
 
         if title == None:
             raise GrapheValidationError("A Graphe document must have a title.")
 
-        title_text = "".join(title.itertext()).strip()
-        document.title = title_text
+        document.title = title.innerText.strip()
 
         if subtitle != None:
-            subtitle_text = "".join(subtitle.itertext()).strip()
-            document.subtitle = subtitle_text
+            document.subtitle = subtitle.innerText.strip()
 
         if abstract != None:
-            abstract_text = "".join(abstract.itertext()).strip()
-            document.abstract = abstract_text
+            document.abstract = abstract.innerText.strip()
 
         if keywords != None:
-            keywords_text = "".join(keywords.itertext()).strip()
-            document.keywords = [k.strip() for k in keywords_text.split(",")]
+            document.keywords = [k.strip() for k in keywords.innerText.split(",")]
 
-        contributors = root.findall("./contributors/contributor")
+        contributors = root.getFirstElementWithName("contributors").getElementsByName("contributor")
 
         for contributor in contributors:
             c = GContributor()
 
-            if "type" in contributor.attrib:
-                t = contributor.attrib["type"]
+            if contributor.hasAttribute("type")
+              t = contributor.getAttributeValue("type")
 
-                if t.lower() in ["author", "editor"]:
+               if t.lower() in ["author", "editor"]:
                     c.type = t.lower()
                 else:
                     raise GrapheValidationError("'{0}' is not a valid Graphe contributor type.".format(t))
 
-            name = contributor.find("./name")
-            emailAddress = contributor.find("./email-address")
-            address = contributor.find("./address")
-            website = contributor.find("./website")
+            name = contributor.getFirstElementWithName("name")
+            emailAddress = contributor.getFirstElementWithName("email-address")
+            address = contributor.getFirstElementWithName("address")
+            website = contributor.getFirstElementWithName("website")
 
             if name != None:
-                c.name = "".join(name.itertext()).strip()
+                c.name = name.innerText.strip()
 
             if emailAddress != None:
-                c.emailAddress = "".join(emailAddress.itertext()).strip()
+                c.emailAddress = emailAddress.innerText.strip()
 
             if address != None:
-                c.address = "".join(address.itertext()).strip()
+                c.address = address.innerText.strip()
 
             if website != None:
-                c.website = "".join(website.itertext()).strip()
+                c.website = website.innerText.strip()
 
     def _importSections(self, root, document):
 
-        sections = root.findall("./sections/section")
+        sections = root.getFirstElementWithName("sections", False).getElementsByName("section", False)
 
         for section in sections:
             s = GSection()
 
             s.document = document
-            s.subelements = self._getPageElementsFromXML(section.findall("*"))
+            s.subelements = self._getPageElementsFromXML(section.subelements)
 
             document.sections.append(s)
-
-    def _compressWhiteSpace(self, text):
-        return re.sub(r"\s+", " ", text)
 
     def _getPageElementsFromXML(self, xmlElements):
         return [self._getPageElementFromXML(e) for e in xmlElements]
 
     def _getPageElementFromXML(self, xmlElement):
 
-        if xmlElement.tag in GPageBreak._elementNames:
+        if isinstance(xmlElement, XMLTextElement):
+            return GTextElement(xmlElement.text)
+
+        if xmlElement.name in GPageBreak._elementNames:
             return GPageBreak()
-        if xmlElement.tag in GLineBreak._elementNames:
+        if xmlElement.name in GLineBreak._elementNames:
             return GLineBreak()
 
         e = None
 
-        if xmlElement.tag in GHeading._elementNames:
+        if xmlElement.name in GHeading._elementNames:
             e = GHeading()
-            i = GHeading._elementNames.index(xmlElement.tag)
+            i = GHeading._elementNames.index(xmlElement.name)
             e.level = GHeading._levels[i]
-        if xmlElement.tag in GParagraph._elementNames:
+        if xmlElement.name in GParagraph._elementNames:
             e = GParagraph()
-        if xmlElement.tag in GDivision._elementNames:
+        if xmlElement.name in GDivision._elementNames:
             e = GDivision()
-        if xmlElement.tag in GBold._elementNames:
+        if xmlElement.name in GBold._elementNames:
             e = GBold()
-        if xmlElement.tag in GItalic._elementNames:
+        if xmlElement.name in GItalic._elementNames:
             e = GItalic()
-        if xmlElement.tag in GUnderline._elementNames:
+        if xmlElement.name in GUnderline._elementNames:
             e = GUnderline()
-        if xmlElement.tag in GStrikethrough._elementNames:
+        if xmlElement.name in GStrikethrough._elementNames:
             e = GStrikethrough()
-        if xmlElement.tag in GOrderedList._elementNames:
+        if xmlElement.name in GOrderedList._elementNames:
             e = GOrderedList()
-        if xmlElement.tag in GUnorderedList._elementNames:
+        if xmlElement.name in GUnorderedList._elementNames:
             e = GUnorderedList()
-        if xmlElement.tag in GListItem._elementNames:
+        if xmlElement.name in GListItem._elementNames:
             e = GListItem()
-        if xmlElement.tag in GHyperlink._elementNames:
+        if xmlElement.name in GHyperlink._elementNames:
             e = GHyperlink()
-
-            if "url" in xmlElement.attrib:
-                e.url = xmlElement.attrib["url"]
-
-            if "title" in xmlElement.attrib:
-                e.title = xmlElement.attrib["title"]
-
-        if xmlElement.tag in GVariable._elementNames:
+            e.url = xmlElement.getAttributeValue("url")
+            e.title = xmlElement.getAttributeValue("title")
+        if xmlElement.name in GVariable._elementNames:
             e = GVariable()
-
-            if "name" in xmlElement.attrib:
-                e.name = xmlElement.attrib["name"]
-
-        if xmlElement.tag in GTableOfContents._elementNames:
+            e.name = xmlElement.getAttributeValue("name")
+        if xmlElement.name in GTableOfContents._elementNames:
             e = GTableOfContents()
-        if xmlElement.tag in GCitation._elementNames:
+        if xmlElement.name in GCitation._elementNames:
             e = GCitation()
-
-            if "r" in xmlElement.attrib:
-                e.reference = xmlElement.attrib["r"]
-
-            if "reference" in xmlElement.attrib:
-                e.reference = xmlElement.attrib["reference"]
+            e.reference = xmlElement.getAttributeValue("r")
+            e.reference = xmlElement.getAttributeValue("reference")
 
         if e == None:
-            raise GrapheValidationError("<{0}> is not a valid element type.".format(xmlElement.tag))
+            raise GrapheValidationError("<{0}> is not a valid element type.".format(xmlElement.name))
 
-        if "id" in xmlElement.attrib:
-            e.id = xmlElement.attrib["id"]
+        e.id = xmlElement.getAttributeValue("id")
+        e.style = xmlElement.getAttributeValue("style")
+        e.styleClass = xmlElement.getAttributeValue("style-class")
+        e.language = xmlElement.getAttributeValue("l")
+        e.language = xmlElement.getAttributeValue("language")
 
-        if "style" in xmlElement.attrib:
-            e.style = xmlElement.attrib["style"]
-
-        if "style-class" in xmlElement.attrib:
-            e.styleClass = xmlElement.attrib["style-class"]
-
-        if "l" in xmlElement.attrib:
-            e.language = xmlElement.attrib["l"]
-
-        if "language" in xmlElement.attrib:
-            e.language = xmlElement.attrib["language"]
-
-        xmlSubelements = list([ se for se in xmlElement])
-        text = "".join(xmlElement.itertext())
-
-        if len(xmlSubelements) > 0:
-            e.subelements = self._getPageElementsFromXML(xmlSubelements)
-        elif text != "":
-            text = self._compressWhiteSpace(text)
-
-            t = GTextElement(text)
-
-            e.subelements.append(t)
+        e.subelements = self._getPageElementsFromXML(xmlElement.subelements)
 
         if (isinstance(e, GParagraph) or isinstance(e, GHeading) or isinstance(e, GDivision)) and len(e.subelements) > 0:
             fse = e.subelements[0]
