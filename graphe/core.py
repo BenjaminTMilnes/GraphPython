@@ -414,10 +414,31 @@ class StyleResolver(object):
 
         for e in allElements:
             for p in styleRule.properties:
-                e.styleProperties[p.name] = p.value
+
+                if p.name == "page-size":
+                    if isinstance(p.value, MLengthSet):
+                        e.styleProperties["page-width"] = p.value.lengths[0]
+                        e.styleProperties["page-height"] = p.value.lengths[1]
+                elif p.name == "margin":
+                    if isinstance(p.value, MLengthSet):
+                        if len(p.value.lengths) == 4:
+                            e.styleProperties["margin-top"] = p.value.lengths[0]
+                            e.styleProperties["margin-right"] = p.value.lengths[1]
+                            e.styleProperties["margin-bottom"] = p.value.lengths[2]
+                            e.styleProperties["margin-left"] = p.value.lengths[3]
+                        if len(p.value.lengths) == 2:
+                            e.styleProperties["margin-top"] = p.value.lengths[0]
+                            e.styleProperties["margin-right"] = p.value.lengths[1]
+                            e.styleProperties["margin-bottom"] = p.value.lengths[0]
+                            e.styleProperties["margin-left"] = p.value.lengths[1]
+                        if len(p.value.lengths) == 1:
+                            e.styleProperties["margin-top"] = p.value.lengths[0]
+                            e.styleProperties["margin-right"] = p.value.lengths[0]
+                            e.styleProperties["margin-bottom"] = p.value.lengths[0]
+                            e.styleProperties["margin-left"] = p.value.lengths[0]
+                else:
+                    e.styleProperties[p.name] = p.value
 
     def applyMorpheDocumentToGrapheDocument(self, morpheDocument, grapheDocument):
         for styleRule in morpheDocument.styleRules:
             self.applyStyleRuleToDocument(styleRule, grapheDocument)
-
-

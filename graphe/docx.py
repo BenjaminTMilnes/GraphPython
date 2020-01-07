@@ -1,6 +1,6 @@
 from graphe.core import *
 from docx import Document
-from docx.shared import Pt, Mm, RGBColor
+from docx.shared import Pt, Mm, Cm, In, RGBColor
 from docx.enum.section import WD_SECTION
 from datetime import datetime
 
@@ -15,7 +15,7 @@ class WordExportContext(object):
         self.currentParagraph = None
         self.currentRun = None
 
-    def addSection(self, pageWidth, pageHeight, topMargin=25, rightMargin=25, bottomMargin=25, leftMargin=25):
+    def addSection(self, pageWidth, pageHeight, topMargin, rightMargin, bottomMargin, leftMargin):
         if self.n > 0:
             self.currentSection = self.dx.add_section(WD_SECTION.NEW_PAGE)
 
@@ -23,10 +23,10 @@ class WordExportContext(object):
 
         self.currentSection.page_width = pageWidth
         self.currentSection.page_height = pageHeight
-        self.currentSection.top_margin = Mm(topMargin)
-        self.currentSection.right_margin = Mm(rightMargin)
-        self.currentSection.bottom_margin = Mm(bottomMargin)
-        self.currentSection.left_margin = Mm(leftMargin)
+        self.currentSection.top_margin = topMargin
+        self.currentSection.right_margin = rightMargin
+        self.currentSection.bottom_margin = bottomMargin
+        self.currentSection.left_margin = leftMargin
 
     def addHeading(self, level):
         self.currentParagraph = self.dx.add_paragraph("")
@@ -62,7 +62,17 @@ class WordExporter(object):
 
     def _getLength(self, length):
         if length.unit.value == "mm":
-            return Mm(float( length.number.value))
+            return Mm(float(length.number.value))
+        if length.unit.value == "cm":
+            return Cm(float(length.number.value))
+        if length.unit.value == "dm":
+            return Cm(float(length.number.value) * 10)
+        if length.unit.value == "m":
+            return Cm(float(length.number.value) * 100)
+        if length.unit.value == "pt":
+            return Pt(float(length.number.value))
+        if length.unit.value == "in":
+            return In(float(length.number.value))
 
     def exportDocument(self, document, filePath):
 
@@ -75,9 +85,14 @@ class WordExporter(object):
         dx.save(filePath)
 
     def exportSection(self, section, document, context):
-        pageWidth = self._getLength(section.styleProperties.get("page-size").lengths[0])
-        pageHeight = self._getLength(section.styleProperties.get("page-size").lengths[1])
-        context.addSection( pageWidth, pageHeight)
+        pageWidth = self._getLength(section.styleProperties.get("page-width"))
+        pageHeight = self._getLength(section.styleProperties.get("page-height"))
+        marginTop = self._getLength(section.styleProperties.get("margin-top"))
+        marginRight = self._getLength(section.styleProperties.get("margin-right"))
+        marginBottom = self._getLength(section.styleProperties.get("margin-bottom"))
+        marginLeft = self._getLength(section.styleProperties.get("margin-left"))
+
+        context.addSection(pageWidth, pageHeight, marginTop, marginRight, marginBottom, marginLeft)
         self.exportPageElements(section.subelements, document, context)
 
     def exportPageElements(self, pageElements, document, context):

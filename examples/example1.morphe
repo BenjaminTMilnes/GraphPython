@@ -6,13 +6,13 @@
 }
 
 h1 {
-    font-size: 24pt;
+    font-height: 24pt;
 }
 
 h2 {
-    font-size: 20pt;
+    font-height: 20pt;
 }
 
 p {
-    font-size: 12pt;
+    font-height: 12pt;
 }
