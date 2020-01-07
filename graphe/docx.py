@@ -15,14 +15,14 @@ class WordExportContext(object):
         self.currentParagraph = None
         self.currentRun = None
 
-    def addSection(self, pageWidth=210, pageHeight=297, topMargin=25, rightMargin=25, bottomMargin=25, leftMargin=25):
+    def addSection(self, pageWidth, pageHeight, topMargin=25, rightMargin=25, bottomMargin=25, leftMargin=25):
         if self.n > 0:
             self.currentSection = self.dx.add_section(WD_SECTION.NEW_PAGE)
 
         self.n = 1
 
-        self.currentSection.page_width = Mm(pageWidth)
-        self.currentSection.page_height = Mm(pageHeight)
+        self.currentSection.page_width = pageWidth
+        self.currentSection.page_height = pageHeight
         self.currentSection.top_margin = Mm(topMargin)
         self.currentSection.right_margin = Mm(rightMargin)
         self.currentSection.bottom_margin = Mm(bottomMargin)
@@ -60,6 +60,10 @@ class WordExporter(object):
     def __init__(self):
         pass
 
+    def _getLength(self, length):
+        if length.unit.value == "mm":
+            return Mm(float( length.number.value))
+
     def exportDocument(self, document, filePath):
 
         dx = Document()
@@ -71,7 +75,9 @@ class WordExporter(object):
         dx.save(filePath)
 
     def exportSection(self, section, document, context):
-        context.addSection()
+        pageWidth = self._getLength(section.styleProperties.get("page-size").lengths[0])
+        pageHeight = self._getLength(section.styleProperties.get("page-size").lengths[1])
+        context.addSection( pageWidth, pageHeight)
         self.exportPageElements(section.subelements, document, context)
 
     def exportPageElements(self, pageElements, document, context):
