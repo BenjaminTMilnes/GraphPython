@@ -2,6 +2,7 @@ from datetime import datetime
 import xml.etree.ElementTree as et
 import re
 from graphe.xml import *
+from morphe.core import *
 
 
 class GContributor(object):
@@ -28,9 +29,20 @@ class GContentElement(object):
         self.subelements = []
 
         self.id = ""
+
         self.styleClass = ""
         self.style = ""
+
+        self.styleProperties = {}
+
         self.language = ""
+
+    @property
+    def styleClassNames(self):
+        cn = self.styleClass.split(" ")
+        cn = [s for s in cn if re.match("[A-Za-z0-9_\-]+", s)]
+
+        return cn
 
 
 class GParagraph(GContentElement):
@@ -266,6 +278,13 @@ class GImporter(object):
             s = GSection()
 
             s.document = document
+
+            s.id = section.getAttributeValue("id")
+            s.style = section.getAttributeValue("style")
+            s.styleClass = section.getAttributeValue("style-class")
+            s.language = section.getAttributeValue("l")
+            s.language = section.getAttributeValue("language")
+
             s.subelements = self._getPageElementsFromXML(section.subelements)
 
             document.sections.append(s)
@@ -343,3 +362,62 @@ class GImporter(object):
                 lse.text = lse.text.rstrip()
 
         return e
+
+
+class StyleResolver(object):
+    def linearise(self, elements):
+        e = elements.copy()
+
+        for element in elements:
+            if isinstance(element, GContentElement):
+                e = e + self.linearise(element.subelements)
+
+        return e
+
+    def selectElementsByName(self, elements, name):
+        return [e for e in elements if isinstance(e, GContentElement) and name in e._elementNames]
+
+    def selectElementsById(self, elements, i):
+        return [e for e in elements if isinstance(e, GContentElement) and e.id == i]
+
+    def selectElementsByClassName(self, elements, className):
+        return [e for e in elements if isinstance(e, GContentElement) and className in e.styleClassNames]
+
+    def selectFirstOrderSubelements(self, elements):
+        return [subelement for element in elements if isinstance(element, GContentElement) for subelement in element.subelements]
+
+    def selectNthOrderSubelements(self, elements):
+        return self.linearise(self.selectFirstOrderSubelements(elements))
+
+    def applyStyleRuleToDocument(self, styleRule, document):
+
+        sections = document.sections
+
+        allElements = self.linearise(sections)
+
+        while len(styleRule.selectors) > 0:
+            selector = styleRule.selectors.pop(0)
+
+            if isinstance(selector, MElementNameSelector):
+                allElements = self.selectElementsByName(allElements, selector.elementName)
+                continue
+
+            if isinstance(selector, MClassSelector):
+                allElements = self.selectElementsByClassName(allElements, selector.className)
+                continue
+
+            if isinstance(selector, MIdSelector):
+                allElements = self.selectElementsById(allElements, selector.id)
+                if len(allElements) > 0:
+                    allElements = [allElements[0]]
+                continue
+
+        for e in allElements:
+            for p in styleRule.properties:
+                e.styleProperties[p.name] = p.value
+
+    def applyMorpheDocumentToGrapheDocument(self, morpheDocument, grapheDocument):
+        for styleRule in morpheDocument.styleRules:
+            self.applyStyleRuleToDocument(styleRule, grapheDocument)
+
+

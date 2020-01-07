@@ -1,0 +1,18 @@
+
+.main {
+    page-size: 129mm 198mm;
+    margin: 1.75cm;
+    font-name: EB Garamond;
+}
+
+h1 {
+    font-size: 24pt;
+}
+
+h2 {
+    font-size: 20pt;
+}
+
+p {
+    font-size: 12pt;
+}
