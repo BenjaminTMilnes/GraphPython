@@ -1,6 +1,6 @@
 from graphe.core import *
 from docx import Document
-from docx.shared import Pt, Mm, Cm, In, RGBColor
+from docx.shared import Pt, Mm, Cm, Inches, RGBColor
 from docx.enum.section import WD_SECTION
 from datetime import datetime
 
@@ -72,7 +72,7 @@ class WordExporter(object):
         if length.unit.value == "pt":
             return Pt(float(length.number.value))
         if length.unit.value == "in":
-            return In(float(length.number.value))
+            return Inches(float(length.number.value))
 
     def exportDocument(self, document, filePath):
 

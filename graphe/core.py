@@ -389,6 +389,58 @@ class StyleResolver(object):
     def selectNthOrderSubelements(self, elements):
         return self.linearise(self.selectFirstOrderSubelements(elements))
 
+    def applyStylePropertyToElement(self, styleProperty, precedence, element):
+        p = styleProperty
+        e = element
+
+        if p.name == "page-size":
+            if isinstance(p.value, MLengthSet) and len(p.value.lengths) == 2:
+                e.styleProperties["page-width"] = p.value.lengths[0]
+                e.styleProperties["page-height"] = p.value.lengths[1]
+        elif p.name == "page-width":
+            if isinstance(p.value, MLengthSet) and len(p.value.lengths) == 1:
+                e.styleProperties["page-width"] = p.value.lengths[0]
+        elif p.name == "page-height":
+            if isinstance(p.value, MLengthSet) and len(p.value.lengths) == 1:
+                e.styleProperties["page-height"] = p.value.lengths[0]
+
+        elif p.name == "margin":
+            if isinstance(p.value, MLengthSet):
+                if len(p.value.lengths) == 4:
+                    e.styleProperties["margin-top"] = p.value.lengths[0]
+                    e.styleProperties["margin-right"] = p.value.lengths[1]
+                    e.styleProperties["margin-bottom"] = p.value.lengths[2]
+                    e.styleProperties["margin-left"] = p.value.lengths[3]
+                if len(p.value.lengths) == 2:
+                    e.styleProperties["margin-top"] = p.value.lengths[0]
+                    e.styleProperties["margin-right"] = p.value.lengths[1]
+                    e.styleProperties["margin-bottom"] = p.value.lengths[0]
+                    e.styleProperties["margin-left"] = p.value.lengths[1]
+                if len(p.value.lengths) == 1:
+                    e.styleProperties["margin-top"] = p.value.lengths[0]
+                    e.styleProperties["margin-right"] = p.value.lengths[0]
+                    e.styleProperties["margin-bottom"] = p.value.lengths[0]
+                    e.styleProperties["margin-left"] = p.value.lengths[0]
+        elif p.name == "margin-top":
+            if isinstance(p.value, MLengthSet) and len(p.value.lengths) == 1:
+                e.styleProperties["margin-top"] = p.value.lengths[0]
+        elif p.name == "margin-right":
+            if isinstance(p.value, MLengthSet) and len(p.value.lengths) == 1:
+                e.styleProperties["margin-right"] = p.value.lengths[0]
+        elif p.name == "margin-bottom":
+            if isinstance(p.value, MLengthSet) and len(p.value.lengths) == 1:
+                e.styleProperties["margin-bottom"] = p.value.lengths[0]
+        elif p.name == "margin-left":
+            if isinstance(p.value, MLengthSet) and len(p.value.lengths) == 1:
+                e.styleProperties["margin-left"] = p.value.lengths[0]
+                
+        elif p.name == "font-height":
+            if isinstance(p.value, MLengthSet) and len(p.value.lengths) == 1:
+                e.styleProperties["font-height"] = p.value.lengths[0]
+
+        else:
+            e.styleProperties[p.name] = p.value
+
     def applyStyleRuleToDocument(self, styleRule, document):
 
         sections = document.sections
@@ -414,30 +466,7 @@ class StyleResolver(object):
 
         for e in allElements:
             for p in styleRule.properties:
-
-                if p.name == "page-size":
-                    if isinstance(p.value, MLengthSet):
-                        e.styleProperties["page-width"] = p.value.lengths[0]
-                        e.styleProperties["page-height"] = p.value.lengths[1]
-                elif p.name == "margin":
-                    if isinstance(p.value, MLengthSet):
-                        if len(p.value.lengths) == 4:
-                            e.styleProperties["margin-top"] = p.value.lengths[0]
-                            e.styleProperties["margin-right"] = p.value.lengths[1]
-                            e.styleProperties["margin-bottom"] = p.value.lengths[2]
-                            e.styleProperties["margin-left"] = p.value.lengths[3]
-                        if len(p.value.lengths) == 2:
-                            e.styleProperties["margin-top"] = p.value.lengths[0]
-                            e.styleProperties["margin-right"] = p.value.lengths[1]
-                            e.styleProperties["margin-bottom"] = p.value.lengths[0]
-                            e.styleProperties["margin-left"] = p.value.lengths[1]
-                        if len(p.value.lengths) == 1:
-                            e.styleProperties["margin-top"] = p.value.lengths[0]
-                            e.styleProperties["margin-right"] = p.value.lengths[0]
-                            e.styleProperties["margin-bottom"] = p.value.lengths[0]
-                            e.styleProperties["margin-left"] = p.value.lengths[0]
-                else:
-                    e.styleProperties[p.name] = p.value
+                self.applyStylePropertyToElement(p, 1, e)
 
     def applyMorpheDocumentToGrapheDocument(self, morpheDocument, grapheDocument):
         for styleRule in morpheDocument.styleRules:
