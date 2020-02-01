@@ -2,25 +2,75 @@ import re
 
 
 class XMLDocument(object):
+    """
+    Represents an XML document.
+
+    Parameters
+    ----------
+    declaration : XMLDeclaration
+        An XML declaration object
+    root : XMLElement
+        An XML element that is the root element of this document
+
+    Attributes
+    ----------
+    declaration : XMLDeclaration
+        This document's XML declaration
+    root : XMLElement
+        This document's root element
+    """
     def __init__(self, declaration, root):
         self.declaration = declaration
         self.root = root
 
         self.root.document = self
+
+        # Calling the setDepth function here results in iterating over 
+        # all of the elements in the document and sets their relational 
+        # properties.
         self.root._setDepth()
 
 
 class XMLAttribute(object):
+    """
+    Represents an XML attribute.
+
+    Parameters
+    ----------
+    name : str
+        The name of this attribute
+    value : str
+        The value of this attribute
+
+    Attributes
+    ----------
+    name : str
+        The name of this attribute
+    value : str
+        The value of this attribute
+    """
     def __init__(self, name, value):
         self.name = name
         self.value = value
 
 
 class XMLDeclaration(object):
+    """
+    Represents an XML declaration.
+
+    Attributes
+    ----------
+    attributes : list<XMLAttribute>
+        The attributes of this declaration
+    """
     def __init__(self):
         self.attributes = []
 
     def _getAttributeValue(self, attributeName):
+        """
+        Gets the value of the attribute with the given name. 
+        Returns an empty string if there is no such attribute.
+        """
         a = [attribute for attribute in self.attributes if attribute.name == attributeName]
 
         if len(a) > 0:
@@ -29,6 +79,11 @@ class XMLDeclaration(object):
             return ""
 
     def _setAttributeValue(self, attributeName, attributeValue):
+        """
+        Sets the value of the attribute with the given name. 
+        This function will add a new attribute with the given 
+        name if there isn't one already.
+        """
         a = [attribute for attribute in self.attributes if attribute.name == attributeName]
 
         if len(a) > 0:
