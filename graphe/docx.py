@@ -41,9 +41,11 @@ class WordExportContext(object):
         self.currentSection.bottom_margin = bottomMargin
         self.currentSection.left_margin = leftMargin
 
-    def addHeading(self, level, textAlignment="left"):
+    def addHeading(self, level, textAlignment="left", marginTop = 0, marginBottom = 0):
         self.currentParagraph = self.dx.add_paragraph("")
         self.currentParagraph.alignment = alignments.get(textAlignment, WD_ALIGN_PARAGRAPH.LEFT)
+        self.currentParagraph.paragraph_format.space_before = Pt(marginTop)
+        self.currentParagraph.paragraph_format.space_after = Pt(marginBottom)
 
         return
 
@@ -53,9 +55,13 @@ class WordExportContext(object):
             level = 1
         self.currentParagraph = self.dx.add_heading("", level)
 
-    def addParagraph(self, textAlignment="left"):
+    def addParagraph(self, textAlignment="left", marginTop = 0, marginBottom = 0, lineHeight = 12, textIndentation = 0):
         self.currentParagraph = self.dx.add_paragraph("")
         self.currentParagraph.alignment = alignments.get(textAlignment, WD_ALIGN_PARAGRAPH.LEFT)
+        self.currentParagraph.paragraph_format.space_before = Pt(marginTop)
+        self.currentParagraph.paragraph_format.space_after = Pt(marginBottom)
+        self.currentParagraph.paragraph_format.line_spacing = Pt(lineHeight)
+        self.currentParagraph.paragraph_format.first_line_indent = Pt(textIndentation)
 
     def addRun(self, text, fontName="Times New Roman", fontHeight=12, bold=False, italic=False, underline=False, strikethrough=False, fontVariant="none"):
         self.currentRun = self.currentParagraph.add_run(text)
@@ -77,18 +83,18 @@ class WordExporter(object):
         pass
 
     def _getLength(self, length):
-        if length.unit.value == "mm":
-            return Mm(float(length.number.value))
-        if length.unit.value == "cm":
-            return Cm(float(length.number.value))
-        if length.unit.value == "dm":
-            return Cm(float(length.number.value) * 10)
-        if length.unit.value == "m":
-            return Cm(float(length.number.value) * 100)
-        if length.unit.value == "pt":
-            return Pt(float(length.number.value))
-        if length.unit.value == "in":
-            return Inches(float(length.number.value))
+        if length.unit == "mm":
+            return Mm(length.number)
+        if length.unit == "cm":
+            return Cm(length.number)
+        if length.unit == "dm":
+            return Cm(length.number * 10)
+        if length.unit == "m":
+            return Cm(length.number * 100)
+        if length.unit == "pt":
+            return Pt(length.number)
+        if length.unit == "in":
+            return Inches(length.number)
 
     def exportDocument(self, document, filePath):
 
@@ -116,21 +122,33 @@ class WordExporter(object):
             self.exportPageElement(pageElement, document, context)
 
     def exportPageElement(self, pageElement, document, context):
+
         if isinstance(pageElement, GParagraph):
             textAlignment = pageElement.styleProperties.get("text-alignment", "left")
+            marginTop = pageElement.styleProperties.get("margin-top", GLength(0, "pt")).toPoints().number
+            marginBottom = pageElement.styleProperties.get("margin-bottom", GLength(0, "pt")).toPoints().number
+            textIndentation =  pageElement.styleProperties.get("text-indentation", GLength(0, "pt")).toPoints().number
+            lineHeight =  pageElement.styleProperties.get("line-height", GLength(12, "pt")).toPoints().number
 
-            context.addParagraph(textAlignment)
+            context.addParagraph(textAlignment, marginTop, marginBottom, lineHeight, textIndentation)
             self.exportPageElements(pageElement.subelements, document, context)
+
         if isinstance(pageElement, GHeading):
             textAlignment = pageElement.styleProperties.get("text-alignment", "left")
+            marginTop = pageElement.styleProperties.get("margin-top", GLength(0, "pt")).toPoints().number
+            marginBottom = pageElement.styleProperties.get("margin-bottom", GLength(0, "pt")).toPoints().number
 
-            context.addHeading(pageElement.level, textAlignment)
+            context.addHeading(pageElement.level, textAlignment, marginTop, marginBottom)
             self.exportPageElements(pageElement.subelements, document, context)
+
         if isinstance(pageElement, GDivision):
             textAlignment = pageElement.styleProperties.get("text-alignment", "left")
+            marginTop = pageElement.styleProperties.get("margin-top", GLength(0, "pt")).toPoints().number
+            marginBottom = pageElement.styleProperties.get("margin-bottom", GLength(0, "pt")).toPoints().number
 
-            context.addParagraph(textAlignment)
+            context.addParagraph(textAlignment, marginTop, marginBottom)
             self.exportPageElements(pageElement.subelements, document, context)
+
         if isinstance(pageElement, GVariable):
             if pageElement.name == "title":
                 context.addRun(document.title)
@@ -140,13 +158,21 @@ class WordExporter(object):
                 context.addRun(document.authorName)
             if pageElement.name == "currentYear":
                 context.addRun(str(datetime.now().year))
+
         if isinstance(pageElement, GHyperlink):
             self.exportPageElements(pageElement.subelements, document, context)
+
+        if isinstance(pageElement, GItalic):
+            self.exportPageElements(pageElement.subelements, document, context)
+
         if isinstance(pageElement, GTextElement):
+            print(pageElement.text, pageElement.styleProperties)
+
             fontName = pageElement.styleProperties.get("font-name", "Times New Roman")
             fontVariant = pageElement.styleProperties.get("font-variant", "none")
-            #fontHeight = float(pageElement.styleProperties.get("font-height", 12).number.value)
+            fontHeight = pageElement.styleProperties.get("font-height", GLength(12, "pt")).toPoints().number
 
-            context.addRun(pageElement.text, fontName, 12, False, False, False, False, fontVariant)
+            context.addRun(pageElement.text, fontName, fontHeight, False, False, False, False, fontVariant)
+
         if isinstance(pageElement, GLineBreak):
             context.addLineBreak()

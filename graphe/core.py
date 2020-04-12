@@ -22,6 +22,7 @@ class GTextElement(object):
 
         self.styleProperties = {
             "font-name": "inherit",
+            "font-weight": "inherit",
             "font-height": "inherit",
             "font-variant": "inherit",
         }
@@ -75,6 +76,15 @@ class GBold(GContentElement):
 
 class GItalic(GContentElement):
     _elementNames = ["italic", "i"]
+
+    def __init__(self):
+
+        self.styleProperties = {
+            "font-name": "inherit",
+            "font-weight": "inherit",
+            "font-height": "inherit",
+            "font-variant": "inherit",
+        }
 
 
 class GUnderline(GContentElement):
@@ -186,6 +196,61 @@ class GDocument(object):
             return a[0].name
         else:
             return ""
+
+
+class GLength(object):
+    def __init__(self, number, unit):
+        if unit not in ["mm", "cm", "dm", "m", "in", "pt"]:
+            raise ValueError("'{0}' is not a valid length unit.".format(unit))
+
+        self.number = number
+        self.unit = unit
+
+    def __str__(self):
+        return "{0}{1}".format(self.number, self.unit)
+
+    def toMM(self):
+        if self.unit == "mm":
+            return self
+        elif self.unit == "cm":
+            return GLength(self.number * 10, "mm")
+        elif self.unit == "dm":
+            return GLength(self.number * 100, "mm")
+        elif self.unit == "m":
+            return GLength(self.number * 1000, "mm")
+        elif self.unit == "in":
+            return GLength(self.number * 25.4, "mm")
+        elif self.unit == "pt":
+            return GLength(self.number * 25.4 / 72, "mm")
+
+    def toCM(self):
+        n = self.toMM().number
+
+        return GLength(n / 10, "cm")
+
+    def toDM(self):
+        n = self.toMM().number
+
+        return GLength(n / 100, "dm")
+
+    def toM(self):
+        n = self.toMM().number
+
+        return GLength(n / 1000, "m")
+
+    def toInches(self):
+        n = self.toMM().number
+
+        return GLength(n / 25.4, "in")
+
+    def toPoints(self):
+        n = self.toMM().number
+
+        return GLength(n * 72 / 25.4, "pt")
+
+
+def makeGLength(mlength):
+    return GLength(float(mlength.number.value), mlength.unit.value)
 
 
 class GrapheValidationError (Exception):
@@ -401,48 +466,56 @@ class StyleResolver(object):
 
         if p.name == "page-size":
             if isinstance(p.value, MLengthSet) and len(p.value.lengths) == 2:
-                e.styleProperties["page-width"] = p.value.lengths[0]
-                e.styleProperties["page-height"] = p.value.lengths[1]
+                e.styleProperties["page-width"] = makeGLength(p.value.lengths[0])
+                e.styleProperties["page-height"] = makeGLength(p.value.lengths[1])
         elif p.name == "page-width":
             if isinstance(p.value, MLengthSet) and len(p.value.lengths) == 1:
-                e.styleProperties["page-width"] = p.value.lengths[0]
+                e.styleProperties["page-width"] = makeGLength(p.value.lengths[0])
         elif p.name == "page-height":
             if isinstance(p.value, MLengthSet) and len(p.value.lengths) == 1:
-                e.styleProperties["page-height"] = p.value.lengths[0]
+                e.styleProperties["page-height"] = makeGLength(p.value.lengths[0])
 
         elif p.name == "margin":
             if isinstance(p.value, MLengthSet):
                 if len(p.value.lengths) == 4:
-                    e.styleProperties["margin-top"] = p.value.lengths[0]
-                    e.styleProperties["margin-right"] = p.value.lengths[1]
-                    e.styleProperties["margin-bottom"] = p.value.lengths[2]
-                    e.styleProperties["margin-left"] = p.value.lengths[3]
+                    e.styleProperties["margin-top"] = makeGLength(p.value.lengths[0])
+                    e.styleProperties["margin-right"] = makeGLength(p.value.lengths[1])
+                    e.styleProperties["margin-bottom"] = makeGLength(p.value.lengths[2])
+                    e.styleProperties["margin-left"] = makeGLength(p.value.lengths[3])
                 if len(p.value.lengths) == 2:
-                    e.styleProperties["margin-top"] = p.value.lengths[0]
-                    e.styleProperties["margin-right"] = p.value.lengths[1]
-                    e.styleProperties["margin-bottom"] = p.value.lengths[0]
-                    e.styleProperties["margin-left"] = p.value.lengths[1]
+                    e.styleProperties["margin-top"] = makeGLength(p.value.lengths[0])
+                    e.styleProperties["margin-right"] = makeGLength(p.value.lengths[1])
+                    e.styleProperties["margin-bottom"] = makeGLength(p.value.lengths[0])
+                    e.styleProperties["margin-left"] = makeGLength(p.value.lengths[1])
                 if len(p.value.lengths) == 1:
-                    e.styleProperties["margin-top"] = p.value.lengths[0]
-                    e.styleProperties["margin-right"] = p.value.lengths[0]
-                    e.styleProperties["margin-bottom"] = p.value.lengths[0]
-                    e.styleProperties["margin-left"] = p.value.lengths[0]
+                    e.styleProperties["margin-top"] = makeGLength(p.value.lengths[0])
+                    e.styleProperties["margin-right"] = makeGLength(p.value.lengths[0])
+                    e.styleProperties["margin-bottom"] = makeGLength(p.value.lengths[0])
+                    e.styleProperties["margin-left"] = makeGLength(p.value.lengths[0])
         elif p.name == "margin-top":
             if isinstance(p.value, MLengthSet) and len(p.value.lengths) == 1:
-                e.styleProperties["margin-top"] = p.value.lengths[0]
+                e.styleProperties["margin-top"] = makeGLength(p.value.lengths[0])
         elif p.name == "margin-right":
             if isinstance(p.value, MLengthSet) and len(p.value.lengths) == 1:
-                e.styleProperties["margin-right"] = p.value.lengths[0]
+                e.styleProperties["margin-right"] = makeGLength(p.value.lengths[0])
         elif p.name == "margin-bottom":
             if isinstance(p.value, MLengthSet) and len(p.value.lengths) == 1:
-                e.styleProperties["margin-bottom"] = p.value.lengths[0]
+                e.styleProperties["margin-bottom"] = makeGLength(p.value.lengths[0])
         elif p.name == "margin-left":
             if isinstance(p.value, MLengthSet) and len(p.value.lengths) == 1:
-                e.styleProperties["margin-left"] = p.value.lengths[0]
+                e.styleProperties["margin-left"] = makeGLength(p.value.lengths[0])
 
         elif p.name == "font-height":
             if isinstance(p.value, MLengthSet) and len(p.value.lengths) == 1:
-                e.styleProperties["font-height"] = p.value.lengths[0]
+                e.styleProperties["font-height"] = makeGLength(p.value.lengths[0])
+
+        elif p.name == "line-height":
+            if isinstance(p.value, MLengthSet) and len(p.value.lengths) == 1:
+                e.styleProperties["line-height"] = makeGLength(p.value.lengths[0])
+
+        elif p.name == "text-indentation":
+            if isinstance(p.value, MLengthSet) and len(p.value.lengths) == 1:
+                e.styleProperties["text-indentation"] = makeGLength(p.value.lengths[0])
 
         else:
             e.styleProperties[p.name] = p.value
