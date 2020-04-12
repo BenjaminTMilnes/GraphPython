@@ -20,6 +20,12 @@ class GTextElement(object):
 
         self.text = text
 
+        self.styleProperties = {
+            "font-name": "inherit",
+            "font-height": "inherit",
+            "font-variant": "inherit",
+        }
+
 
 class GContentElement(object):
     _elementNames = []
@@ -433,7 +439,7 @@ class StyleResolver(object):
         elif p.name == "margin-left":
             if isinstance(p.value, MLengthSet) and len(p.value.lengths) == 1:
                 e.styleProperties["margin-left"] = p.value.lengths[0]
-                
+
         elif p.name == "font-height":
             if isinstance(p.value, MLengthSet) and len(p.value.lengths) == 1:
                 e.styleProperties["font-height"] = p.value.lengths[0]
@@ -471,3 +477,15 @@ class StyleResolver(object):
     def applyMorpheDocumentToGrapheDocument(self, morpheDocument, grapheDocument):
         for styleRule in morpheDocument.styleRules:
             self.applyStyleRuleToDocument(styleRule, grapheDocument)
+
+        for section in grapheDocument.sections:
+            self.cascadeToSubelements(section)
+
+    def cascadeToSubelements(self, element):
+        for subelement in element.subelements:
+            for spn in element.styleProperties:
+                if spn in subelement.styleProperties and subelement.styleProperties[spn] == "inherit":
+                    subelement.styleProperties[spn] = element.styleProperties[spn]
+
+            if isinstance(subelement, GContentElement):
+                self.cascadeToSubelements(subelement)

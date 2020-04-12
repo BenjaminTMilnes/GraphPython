@@ -1,18 +1,42 @@
 
-.main {
-    page-size: 129mm 198mm;
+.halftitlepage {
+    page-width: 12.98cm;
+    page-height: 19.85cm;
     margin: 1.75cm;
-    font-name: EB Garamond;
+}
+.publishingpage {
+    page-width: 12.98cm;
+    page-height: 19.85cm;
+    margin: 1.75cm;
+}
+.titlepage {
+    page-width: 12.98cm;
+    page-height: 19.85cm;
+    margin: 1.75cm;
+}
+
+.main {
+    page-width: 12.98cm;
+    page-height: 19.85cm;
+    margin: 1.75cm;
 }
 
 h1 {
     font-height: 24pt;
+    font-name: EB Garamond SemiBold;
+    text-alignment: centred;
+    font-variant: small-capitals;
 }
 
 h2 {
     font-height: 20pt;
+    font-name: EB Garamond SemiBold;
+    text-alignment: centred;
+    font-variant: small-capitals;
 }
 
 p {
     font-height: 12pt;
+    font-name: EB Garamond;
+    text-alignment: left-justified;
 }
