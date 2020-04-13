@@ -202,6 +202,15 @@ class GPageTemplate(GTemplate):
     def __init__(self):
         super(GPageTemplate, self).__init__()
 
+class GHeader(GContentElement):
+    def __init__(self):
+        super(GContentElement, self).__init__()
+
+class GFooter(GContentElement):
+    def __init__(self):
+        super(GContentElement, self).__init__()
+
+
 
 class GSection(GContentElement):
     _elementNames = ["section"]
@@ -316,6 +325,7 @@ class GImporter(object):
         document = GDocument()
 
         self._importMetadata(root, document)
+        self._importTemplates(root, document)
         self._importSections(root, document)
 
         return document
@@ -385,6 +395,36 @@ class GImporter(object):
                 c.website = website.innerText.strip()
 
             document.contributors.append(c)
+
+    def _importTemplates(self, root, document):
+
+        templates = root.getFirstElementWithName("templates", False)
+        pageTemplates = root.getElementsByName("page-template", False)
+
+        for pageTemplate in pageTemplates:
+            pt = GPageTemplate()
+
+            pt.reference = pageTemplate.getAttributeValue("r")
+            pt.reference = pageTemplate.getAttributeValue("reference")
+
+            header = pageTemplate.getFirstElementWithName("header", False)
+            footer = pageTemplate.getFirstElementWithName("footer", False)
+
+            if header != None:
+                h = GHeader()
+
+                h.subelements = self._getPageElementsFromXML(pageTemplate.subelements)
+
+                pt.subelements.append(h)
+
+            if footer != None:
+                f = GFooter()
+
+                f.subelements = self._getPageElementsFromXML(pageTemplate.subelements)
+
+                pt.subelements.append(f)
+
+            document.templates.append(pt)
 
     def _importSections(self, root, document):
 

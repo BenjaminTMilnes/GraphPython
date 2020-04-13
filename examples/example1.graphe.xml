@@ -11,8 +11,18 @@
       <address>The Throne Room, The Death Star, Currently over the Forest Moon of Endor</address>
     </contributor>
   </contributors>
+  <templates>
+    <page-template reference="main">
+    <header>
+    <d>Some header text</d>
+    </header>
+    <footer>
+    <d style="text-alignment: centre;"><pn /></d>
+    </footer>
+    </page-template>
+  </templates>
   <sections>
-    <section style-class="halftitlepage">
+  <section style-class="halftitlepage">
       <h1>The Tragedy <lb />of <lb />Darth Plagueis the Wise</h1>
     </section>
     <section style-class="publishingpage">
@@ -21,7 +31,7 @@
     <section style-class="titlepage" page-break-type="odd-page">
       <h1>The Tragedy <lb />of <lb />Darth Plagueis the Wise</h1>
     </section>
-    <section style-class="main" page-break-type="odd-page">
+    <section ptr="main" style-class="main" page-break-type="odd-page">
     <h2>Chapter 1</h2>
     <p>Did you ever hear the tragedy of <i>Darth Plagueis the Wise</i>? I thought not. It's not a story the Jedi would teach you ...</p>
     <p>Darth Plagueis the Wise was a dark lord of the Sith who was so powerful ...</p>
