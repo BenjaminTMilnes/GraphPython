@@ -1,47 +1,40 @@
 
-.halftitlepage {
-    page-width: 12.98cm;
-    page-height: 19.85cm;
-    margin: 1.75cm;
-}
-.publishingpage {
-    page-width: 12.98cm;
-    page-height: 19.85cm;
-    margin: 1.75cm;
-}
-.titlepage {
-    page-width: 12.98cm;
-    page-height: 19.85cm;
-    margin: 1.75cm;
-}
-
-.main {
-    page-width: 12.98cm;
-    page-height: 19.85cm;
+section {
+    page-size: 12.98cm 19.85cm;
     margin: 1.75cm;
     font-name: EB Garamond;
-    font-height: 12pt;
+    font-height: 10pt;
+    font-weight: normal;
+}
+
+.halftitlepage { 
+    text-alignment: centred;
+}
+.publishingpage {
+    text-alignment: centred;
+}
+.titlepage {
+    text-alignment: centred;
+}
+.main {
 }
 
 h1 {
     font-height: 24pt;
-    font-name: EB Garamond;
-    text-alignment: centred;
     font-variant: small-capitals;
+    font-name: EB Garamond Medium;
 }
 
 h2 {
     font-height: 20pt;
-    font-name: EB Garamond;
-    text-alignment: centred;
     font-variant: small-capitals;
     margin:80pt 0pt 50pt 0pt;
     line-height: 20pt;
+    font-name: EB Garamond Medium;
 }
 
 p {
     font-height: 10pt;
-    font-name: EB Garamond;
     text-alignment: left-justified;
     margin: 7pt 0pt;
     text-indentation: 20pt;

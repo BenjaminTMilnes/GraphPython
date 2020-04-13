@@ -171,8 +171,9 @@ class WordExporter(object):
             fontName = pageElement.styleProperties.get("font-name", "Times New Roman")
             fontVariant = pageElement.styleProperties.get("font-variant", "none")
             fontHeight = pageElement.styleProperties.get("font-height", GLength(12, "pt")).toPoints().number
+            fontSlant = True if pageElement.styleProperties.get("font-slant", "none") == "italic" else False
 
-            context.addRun(pageElement.text, fontName, fontHeight, False, False, False, False, fontVariant)
+            context.addRun(pageElement.text, fontName, fontHeight, False, fontSlant, False, False, fontVariant)
 
         if isinstance(pageElement, GLineBreak):
             context.addLineBreak()

@@ -25,6 +25,7 @@ class GTextElement(object):
             "font-weight": "inherit",
             "font-height": "inherit",
             "font-variant": "inherit",
+            "font-slant": "inherit",
         }
 
 
@@ -55,6 +56,17 @@ class GContentElement(object):
 class GParagraph(GContentElement):
     _elementNames = ["paragraph", "p"]
 
+    def __init__(self):
+
+        self.styleProperties = {
+            "font-name": "inherit",
+            "font-variant": "inherit",
+            "font-height": "inherit",
+            "font-weight": "inherit",
+            "font-slant": "inherit",
+            "text-alignment": "inherit",
+        }
+
 
 class GHeading(GContentElement):
     _elementNames = ["heading1", "heading2", "heading3", "heading4", "heading5", "heading6", "heading7", "heading8", "heading9", "heading10", "h1", "h2", "h3", "h4", "h5", "h6", "h7", "h8", "h9", "h10"]
@@ -65,13 +77,44 @@ class GHeading(GContentElement):
 
         self.level = level
 
+        self.styleProperties = {
+            "font-name": "inherit",
+            "font-variant": "inherit",
+            "font-height": "inherit",
+            "font-weight": "inherit",
+            "font-slant": "inherit",
+            "text-alignment": "inherit",
+        }
+
 
 class GDivision (GContentElement):
     _elementNames = ["division", "d"]
 
+    def __init__(self):
+
+        self.styleProperties = {
+            "font-name": "inherit",
+            "font-variant": "inherit",
+            "font-height": "inherit",
+            "font-weight": "inherit",
+            "font-slant": "inherit",
+            "text-alignment": "inherit",
+        }
+
 
 class GBold(GContentElement):
     _elementNames = ["bold", "b"]
+
+    def __init__(self):
+
+        self.styleProperties = {
+            "font-name": "inherit",
+            "font-variant": "inherit",
+            "font-height": "inherit",
+            "font-weight": "bold",
+            "font-slant": "inherit",
+            "text-alignment": "inherit",
+        }
 
 
 class GItalic(GContentElement):
@@ -81,9 +124,11 @@ class GItalic(GContentElement):
 
         self.styleProperties = {
             "font-name": "inherit",
-            "font-weight": "inherit",
-            "font-height": "inherit",
             "font-variant": "inherit",
+            "font-height": "inherit",
+            "font-weight": "inherit",
+            "font-slant": "italic",
+            "text-alignment": "inherit",
         }
 
 
