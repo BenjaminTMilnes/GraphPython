@@ -22,13 +22,13 @@
     </page-template>
   </templates>
   <sections>
-  <section style-class="halftitlepage">
+  <section ptr="main" style-class="halftitlepage">
       <h1>The Tragedy <lb />of <lb />Darth Plagueis the Wise</h1>
     </section>
-    <section style-class="publishingpage">
+    <section ptr="main" style-class="publishingpage">
       <p>ISBN 0000000000000</p>
     </section>
-    <section style-class="titlepage" page-break-type="odd-page">
+    <section ptr="main" style-class="titlepage" page-break-type="odd-page">
       <h1>The Tragedy <lb />of <lb />Darth Plagueis the Wise</h1>
     </section>
     <section ptr="main" style-class="main" page-break-type="odd-page">

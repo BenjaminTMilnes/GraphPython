@@ -4,6 +4,7 @@ from docx.shared import Pt, Mm, Cm, Inches, RGBColor
 from docx.enum.section import WD_SECTION
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from datetime import datetime
+import logging
 
 alignments = {
     "justified": WD_ALIGN_PARAGRAPH.JUSTIFY,
@@ -20,12 +21,14 @@ alignments = {
 
 class WordExportContext(object):
     def __init__(self, dx):
+        self.logger = logging.getLogger(__name__)
 
         self.dx = dx
 
         self.n = 0
         self.currentSection = self.dx.sections[0]
         self.currentParagraph = None
+        self.lastParagraph = None
         self.currentRun = None
 
     def addSection(self, pageWidth, pageHeight, topMargin, rightMargin, bottomMargin, leftMargin):
@@ -77,10 +80,19 @@ class WordExportContext(object):
     def addLineBreak(self):
         self.currentRun.add_break()
 
+    def enterSectionHeader(self):
+        self.lastParagraph = self.currentParagraph
+
+        header = self.currentSection.header
+        self.currentParagraph = header.paragraphs[0]
+        self.currentParagraph.text = "lkj"
+
+    def exitSectionHeader(self):
+        self.currentParagraph = self.lastParagraph
 
 class WordExporter(object):
     def __init__(self):
-        pass
+        self.logger = logging.getLogger(__name__)
 
     def _getLength(self, length):
         if length.unit == "mm":
@@ -115,6 +127,14 @@ class WordExporter(object):
         marginLeft = self._getLength(section.styleProperties.get("margin-left"))
 
         context.addSection(pageWidth, pageHeight, marginTop, marginRight, marginBottom, marginLeft)
+
+        self.logger.info("Page template reference: '{0}'".format(section.pageTemplateReference))
+
+        if section.pageTemplate != None and section.pageTemplate.header != None:
+            context.enterSectionHeader()
+            self.exportPageElements(section.pageTemplate.header.subelements, document, context)
+            context.exitSectionHeader()
+
         self.exportPageElements(section.subelements, document, context)
 
     def exportPageElements(self, pageElements, document, context):
@@ -166,8 +186,6 @@ class WordExporter(object):
             self.exportPageElements(pageElement.subelements, document, context)
 
         if isinstance(pageElement, GTextElement):
-            print(pageElement.text, pageElement.styleProperties)
-
             fontName = pageElement.styleProperties.get("font-name", "Times New Roman")
             fontVariant = pageElement.styleProperties.get("font-variant", "none")
             fontHeight = pageElement.styleProperties.get("font-height", GLength(12, "pt")).toPoints().number

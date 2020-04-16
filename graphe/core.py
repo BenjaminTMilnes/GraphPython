@@ -202,6 +202,9 @@ class GPageTemplate(GTemplate):
     def __init__(self):
         super(GPageTemplate, self).__init__()
 
+        self.header = None
+        self.footer = None
+
 class GHeader(GContentElement):
     def __init__(self):
         super(GContentElement, self).__init__()
@@ -225,7 +228,12 @@ class GSection(GContentElement):
     @property
     def pageTemplate(self):
         if self.document != None:
-            return [pt for pt in self.document.templates if pt.reference == self.pageTemplateReference][0]
+            pageTemplates =  [pt for pt in self.document.templates if pt.reference == self.pageTemplateReference]
+
+            if len(pageTemplates) > 0:
+                return pageTemplates[0]
+            else:
+                return None
         else:
             return None
 
@@ -415,14 +423,14 @@ class GImporter(object):
 
                 h.subelements = self._getPageElementsFromXML(pageTemplate.subelements)
 
-                pt.subelements.append(h)
+                pt.header = h
 
             if footer != None:
                 f = GFooter()
 
                 f.subelements = self._getPageElementsFromXML(pageTemplate.subelements)
 
-                pt.subelements.append(f)
+                pt.footer = f
 
             document.templates.append(pt)
 
@@ -440,7 +448,8 @@ class GImporter(object):
             s.styleClass = section.getAttributeValue("style-class")
             s.language = section.getAttributeValue("l")
             s.language = section.getAttributeValue("language")
-
+            s.pageTemplateReference = section.getAttributeValue("ptr")
+            
             s.subelements = self._getPageElementsFromXML(section.subelements)
 
             document.sections.append(s)
