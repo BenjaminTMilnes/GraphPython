@@ -44,6 +44,9 @@ class PDFIndirectObject(object):
         self.id = 0
         self.generation = 0
 
+    def setIds(self):
+        pass
+
     def getObjectReference(self):
         return PDFObjectReference(self.id, self.generation)
 
@@ -58,9 +61,20 @@ class PDFPagesObject(PDFIndirectObject):
         self.parent = None
         self.children = []
 
+    def setIds(self):
+        n = self.id
+
+        for child in self.children:
+            n += 1
+            child.id = n
+            child.parent = self
+            child.setIds()
+
     def getDictionary(self):
         return [
-            (PDFName("Type"), PDFName("Pages"))
+            (PDFName("Type"), PDFName("Pages")),
+            (PDFName("Parent"), self.parent.getObjectReference()),
+            (PDFName("Kids"), [c.getObjectReference() for c in self.children]),
         ]
 
 
@@ -79,7 +93,8 @@ class PDFPageObject(PDFIndirectObject):
 
     def getDictionary(self):
         return [
-            (PDFName("Type"), PDFName("Page"))
+            (PDFName("Type"), PDFName("Page")),
+            (PDFName("Parent"), self.parent.getObjectReference()),
         ]
 
 
@@ -108,9 +123,18 @@ class PDFDocumentCatalogObject(PDFIndirectObject):
     def __init__(self):
         super().__init__()
 
+        self.pages = None
+
+    def setIds(self):
+
+        self.pages.id = self.id + 1
+        self.pages.parent = self
+        self.pages.setIds()
+
     def getDictionary(self):
         return [
-            (PDFName("Type"), PDFName("Catalog"))
+            (PDFName("Type"), PDFName("Catalog")),
+            (PDFName("Pages"), self.pages.getObjectReference())
         ]
 
 
@@ -118,6 +142,12 @@ class PDFTrailer(PDFIndirectObject):
     def __init__(self):
         self.root = PDFDocumentCatalogObject()
         self.info = PDFDocumentInformationObject()
+
+    def setIds(self):
+        self.info.id = 1
+
+        self.root.id = 2
+        self.root.setIds()
 
     def getDictionary(self):
         return [
@@ -131,8 +161,12 @@ class PDFWriter(object):
         pass
 
     def writeDocument(self, filePath, pdfDocument):
+        pdfDocument.trailer.setIds()
+
         with open(filePath, "w") as fileObject:
             self._writeHeader(fileObject, pdfDocument.header)
+
+            self._writePageObject( fileObject, pdfDocument.trailer.root.pages)
 
             self._writeIndirectObject(fileObject, pdfDocument.trailer.root)
             self._writeIndirectObject(fileObject, pdfDocument.trailer.info)
@@ -154,13 +188,20 @@ class PDFWriter(object):
 
         self._writeDictionary(fileObject, pdfTrailer.getDictionary())
 
+    def _writePageObject(self, fileObject, pdfPage):
+
+        self._writeIndirectObject(fileObject, pdfPage)
+
+        if isinstance(pdfPage, PDFPagesObject):
+            for p in pdfPage.children:
+                self._writePageObject(fileObject, p)
+
     def _writeIndirectObject(self, fileObject, pdfIndirectObject):
         fileObject.write("{0} {1} obj".format(pdfIndirectObject.id, pdfIndirectObject.generation))
 
         self._writeDictionary(fileObject, pdfIndirectObject.getDictionary())
-        
-        fileObject.write("endobj\n")
 
+        fileObject.write("endobj\n")
 
     def _writeDictionary(self, fileObject, pdfDictionary):
         fileObject.write("\n<<\n")
@@ -178,10 +219,28 @@ class PDFWriter(object):
                 self._writeString(fileObject, item[1])
             if isinstance(item[1], PDFDate):
                 self._writeDate(fileObject, item[1])
+            if isinstance(item[1], list):
+                self._writeList(fileObject, item[1])
 
             fileObject.write("\n")
 
         fileObject.write(">>\n")
+
+    def _writeList(self, fileObject, pdfList):
+        
+        fileObject.write("[")
+
+        for item in pdfList:
+            if isinstance(item, PDFObjectReference):
+                self._writeObjectReference(fileObject, item)
+            if isinstance(item, PDFName):
+                self._writeName(fileObject, item)
+            if isinstance(item, PDFString):
+                self._writeString(fileObject, item)
+            if isinstance(item, PDFDate):
+                self._writeDate(fileObject, item)   
+                
+        fileObject.write("]")
 
     def _writeName(self, fileObject, pdfName):
         fileObject.write("/{0}".format(pdfName.value))
@@ -192,7 +251,6 @@ class PDFWriter(object):
     def _writeDate(self, fileObject, pdfDate):
         fileObject.write("(D:{0})".format(pdfDate.value.strftime("%Y%m%d%H%M%SZ")))
 
-
     def _writeObjectReference(self, fileObject, pdfObjectReference):
         fileObject.write("{0} {1} R".format(pdfObjectReference.id, pdfObjectReference.generation))
 
@@ -202,5 +260,10 @@ if __name__ == "__main__":
     pdfWriter = PDFWriter()
 
     pdfDocument = PDFDocument()
+    pdfPages = PDFPagesObject()
+    pdfPage = PDFPageObject()
+
+    pdfDocument.trailer.root.pages = pdfPages
+    pdfPages.children.append(pdfPage)
 
     pdfWriter.writeDocument("test_pdf.txt", pdfDocument)
