@@ -11,6 +11,11 @@ class PDFString(object):
         self.value = value
 
 
+class PDFNumber (object):
+    def __init__(self, value):
+        self.value = value
+
+
 class PDFDate(object):
     def __init__(self, value):
         self.value = value
@@ -60,6 +65,7 @@ class PDFPagesObject(PDFIndirectObject):
 
         self.parent = None
         self.children = []
+        self.count = 0
 
     def setIds(self):
         n = self.id
@@ -70,11 +76,17 @@ class PDFPagesObject(PDFIndirectObject):
             child.parent = self
             child.setIds()
 
+            if isinstance(child, PDFPagesObject):
+                self.count += child.count
+            elif isinstance(child, PDFPageObject):
+                self.count += 1
+
     def getDictionary(self):
         return [
             (PDFName("Type"), PDFName("Pages")),
             (PDFName("Parent"), self.parent.getObjectReference()),
             (PDFName("Kids"), [c.getObjectReference() for c in self.children]),
+            (PDFName("Count"), PDFNumber(self.count)),
         ]
 
 
@@ -85,8 +97,8 @@ class PDFPageObject(PDFIndirectObject):
         self.parent = None
         self.mediaBoxLeft = 0
         self.mediaBoxTop = 0
-        self.mediaBoxWidth = 0
-        self.mediaBoxHeight = 0
+        self.mediaBoxWidth = 500
+        self.mediaBoxHeight = 500
         self.rotation = 0
         self.contents = []
         self.resources = {}
@@ -95,7 +107,9 @@ class PDFPageObject(PDFIndirectObject):
         return [
             (PDFName("Type"), PDFName("Page")),
             (PDFName("Parent"), self.parent.getObjectReference()),
-        ]
+            (PDFName("Rotate"), PDFNumber(self.rotation)),
+            (PDFName("MediaBox"), [PDFNumber(self.mediaBoxLeft), PDFNumber(self.mediaBoxTop), PDFNumber(self.mediaBoxWidth), PDFNumber(self.mediaBoxHeight)]),
+            ]
 
 
 class PDFDocumentInformationObject(PDFIndirectObject):
@@ -217,6 +231,8 @@ class PDFWriter(object):
                 self._writeName(fileObject, item[1])
             if isinstance(item[1], PDFString):
                 self._writeString(fileObject, item[1])
+            if isinstance(item[1], PDFNumber):
+                self._writeNumber(fileObject, item[1])
             if isinstance(item[1], PDFDate):
                 self._writeDate(fileObject, item[1])
             if isinstance(item[1], list):
@@ -229,14 +245,21 @@ class PDFWriter(object):
     def _writeList(self, fileObject, pdfList):
         
         fileObject.write("[")
+        n = 0
 
         for item in pdfList:
+            if n > 0:
+                fileObject.write(" ")
+            n += 1
+            
             if isinstance(item, PDFObjectReference):
                 self._writeObjectReference(fileObject, item)
             if isinstance(item, PDFName):
                 self._writeName(fileObject, item)
             if isinstance(item, PDFString):
                 self._writeString(fileObject, item)
+            if isinstance(item, PDFNumber):
+                self._writeNumber(fileObject, item)
             if isinstance(item, PDFDate):
                 self._writeDate(fileObject, item)   
                 
@@ -247,6 +270,9 @@ class PDFWriter(object):
 
     def _writeString(self, fileObject, pdfString):
         fileObject.write("({0})".format(pdfString.value))
+
+    def _writeNumber(self, fileObject, pdfNumber):
+        fileObject.write("{0}".format(pdfNumber.value))
 
     def _writeDate(self, fileObject, pdfDate):
         fileObject.write("(D:{0})".format(pdfDate.value.strftime("%Y%m%d%H%M%SZ")))
