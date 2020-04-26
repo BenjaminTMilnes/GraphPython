@@ -41,7 +41,18 @@ class PDFHeader(object):
 
 class PDFCrossReferenceTable(object):
     def __init__(self):
-        pass
+        self.entries = []
+
+    @property
+    def length(self):
+        return len(self.entries)
+
+
+class PDFCrossReferenceTableEntry(object):
+    def __init__(self):
+        self.byteOffset = 0
+        self.generationNumber = 0
+        self.inUse = True
 
 
 class PDFIndirectObject(object):
@@ -58,6 +69,7 @@ class PDFIndirectObject(object):
     def getDictionary(self):
         return []
 
+
 class PDFStreamObject(PDFIndirectObject):
     def __init__(self):
         super().__init__()
@@ -69,6 +81,7 @@ class PDFStreamObject(PDFIndirectObject):
         return [
             (PDFName("Length"), PDFNumber(self.length))
         ]
+
 
 class PDFTextStreamContext(object):
     def __init__(self, pdfStreamObject):
@@ -95,9 +108,6 @@ class PDFTextStreamContext(object):
     def drawText(self, text):
         self._streamObject.data += "({0}) Tj ".format(text)
         self._streamObject.length = len(self._streamObject.data)
-
-
-
 
 
 class PDFPagesObject(PDFIndirectObject):
@@ -159,7 +169,7 @@ class PDFPageObject(PDFIndirectObject):
             (PDFName("Rotate"), PDFNumber(self.rotation)),
             (PDFName("MediaBox"), [PDFNumber(self.mediaBoxLeft), PDFNumber(self.mediaBoxTop), PDFNumber(self.mediaBoxWidth), PDFNumber(self.mediaBoxHeight)]),
             (PDFName("Contents"), [c.getObjectReference() for c in self.contents]),
-            ]
+        ]
 
 
 class PDFDocumentInformationObject(PDFIndirectObject):
@@ -230,7 +240,7 @@ class PDFWriter(object):
         with open(filePath, "w") as fileObject:
             self._writeHeader(fileObject, pdfDocument.header)
 
-            self._writePageObject( fileObject, pdfDocument.trailer.root.pages)
+            self._writePageObject(fileObject, pdfDocument.trailer.root.pages)
 
             self._writeIndirectObject(fileObject, pdfDocument.trailer.root)
             self._writeIndirectObject(fileObject, pdfDocument.trailer.info)
@@ -244,8 +254,14 @@ class PDFWriter(object):
     def _writeHeader(self, fileObject, pdfHeader):
         fileObject.write("%PDF-{0}\n".format(pdfHeader.version))
 
-    def _writeCrossReferenceTable(self, fileObject):
+    def _writeCrossReferenceTable(self, fileObject, pdfCrossReferenceTable):
         fileObject.write("xref\n")
+        fileObject.write("{0} {1}\n".format(0, pdfCrossReferenceTable.length))
+
+        for entry in pdfCrossReferenceTable.entries:
+            fn = "n" if entry.inUse == True else "f"
+
+            fileObject.write("{0} {1} {2}".format(entry.byteOffset, entry.generationNumber, fn))
 
     def _writeTrailer(self, fileObject, pdfTrailer):
         fileObject.write("trailer")
@@ -261,7 +277,7 @@ class PDFWriter(object):
                 self._writePageObject(fileObject, p)
         elif isinstance(pdfPage, PDFPageObject):
             for c in pdfPage.contents:
-                self._writeIndirectObject(fileObject,c)
+                self._writeIndirectObject(fileObject, c)
 
     def _writeIndirectObject(self, fileObject, pdfIndirectObject):
         fileObject.write("{0} {1} obj".format(pdfIndirectObject.id, pdfIndirectObject.generation))
@@ -302,7 +318,7 @@ class PDFWriter(object):
         fileObject.write(">>\n")
 
     def _writeList(self, fileObject, pdfList):
-        
+
         fileObject.write("[")
         n = 0
 
@@ -320,8 +336,8 @@ class PDFWriter(object):
             if isinstance(item, PDFNumber):
                 self._writeNumber(fileObject, item)
             if isinstance(item, PDFDate):
-                self._writeDate(fileObject, item)   
-                
+                self._writeDate(fileObject, item)
+
         fileObject.write("]")
 
     def _writeName(self, fileObject, pdfName):
@@ -357,7 +373,7 @@ if __name__ == "__main__":
 
     context.beginTextBlock()
     context.setFont("F1", 12)
-    context.moveTo(100,100)
+    context.moveTo(100, 100)
     context.drawText("Hello world!")
     context.endTextBlock()
 
