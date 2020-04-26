@@ -13,7 +13,16 @@ endobj
 	/Parent 3 0 R
 	/Rotate 0
 	/MediaBox [0 0 500 500]
+	/Contents [5 0 R]
 >>
+endobj
+5 0 obj
+<<
+	/Length 45
+>>
+stream
+BT /F1 12 Tf 100 100 Td (Hello world!) Tj ET 
+endstream
 endobj
 2 0 obj
 <<
@@ -28,8 +37,8 @@ endobj
 	/Keywords ()
 	/Author ()
 	/Creator (Graphe)
-	/CreationDate (D:20200425175738Z)
-	/ModDate (D:20200425175738Z)
+	/CreationDate (D:20200426011327Z)
+	/ModDate (D:20200426011327Z)
 >>
 endobj
 xref

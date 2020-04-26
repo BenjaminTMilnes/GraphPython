@@ -58,6 +58,47 @@ class PDFIndirectObject(object):
     def getDictionary(self):
         return []
 
+class PDFStreamObject(PDFIndirectObject):
+    def __init__(self):
+        super().__init__()
+
+        self.length = 0
+        self.data = None
+
+    def getDictionary(self):
+        return [
+            (PDFName("Length"), PDFNumber(self.length))
+        ]
+
+class PDFTextStreamContext(object):
+    def __init__(self, pdfStreamObject):
+
+        self._streamObject = pdfStreamObject
+        self._streamObject.data = ""
+
+    def beginTextBlock(self):
+        self._streamObject.data += "BT "
+        self._streamObject.length = len(self._streamObject.data)
+
+    def endTextBlock(self):
+        self._streamObject.data += "ET "
+        self._streamObject.length = len(self._streamObject.data)
+
+    def setFont(self, fontName, fontSize):
+        self._streamObject.data += "/{0} {1} Tf ".format(fontName, fontSize)
+        self._streamObject.length = len(self._streamObject.data)
+
+    def moveTo(self, x, y):
+        self._streamObject.data += "{0} {1} Td ".format(x, y)
+        self._streamObject.length = len(self._streamObject.data)
+
+    def drawText(self, text):
+        self._streamObject.data += "({0}) Tj ".format(text)
+        self._streamObject.length = len(self._streamObject.data)
+
+
+
+
 
 class PDFPagesObject(PDFIndirectObject):
     def __init__(self):
@@ -103,12 +144,21 @@ class PDFPageObject(PDFIndirectObject):
         self.contents = []
         self.resources = {}
 
+    def setIds(self):
+        n = self.id
+
+        for c in self.contents:
+            n += 1
+            c.id = n
+            c.setIds()
+
     def getDictionary(self):
         return [
             (PDFName("Type"), PDFName("Page")),
             (PDFName("Parent"), self.parent.getObjectReference()),
             (PDFName("Rotate"), PDFNumber(self.rotation)),
             (PDFName("MediaBox"), [PDFNumber(self.mediaBoxLeft), PDFNumber(self.mediaBoxTop), PDFNumber(self.mediaBoxWidth), PDFNumber(self.mediaBoxHeight)]),
+            (PDFName("Contents"), [c.getObjectReference() for c in self.contents]),
             ]
 
 
@@ -209,11 +259,20 @@ class PDFWriter(object):
         if isinstance(pdfPage, PDFPagesObject):
             for p in pdfPage.children:
                 self._writePageObject(fileObject, p)
+        elif isinstance(pdfPage, PDFPageObject):
+            for c in pdfPage.contents:
+                self._writeIndirectObject(fileObject,c)
 
     def _writeIndirectObject(self, fileObject, pdfIndirectObject):
         fileObject.write("{0} {1} obj".format(pdfIndirectObject.id, pdfIndirectObject.generation))
 
         self._writeDictionary(fileObject, pdfIndirectObject.getDictionary())
+
+        if isinstance(pdfIndirectObject, PDFStreamObject):
+            fileObject.write("stream\n")
+            if pdfIndirectObject.data != None:
+                fileObject.write(pdfIndirectObject.data)
+            fileObject.write("\nendstream\n")
 
         fileObject.write("endobj\n")
 
@@ -251,7 +310,7 @@ class PDFWriter(object):
             if n > 0:
                 fileObject.write(" ")
             n += 1
-            
+
             if isinstance(item, PDFObjectReference):
                 self._writeObjectReference(fileObject, item)
             if isinstance(item, PDFName):
@@ -288,8 +347,18 @@ if __name__ == "__main__":
     pdfDocument = PDFDocument()
     pdfPages = PDFPagesObject()
     pdfPage = PDFPageObject()
+    pdfStream = PDFStreamObject()
 
     pdfDocument.trailer.root.pages = pdfPages
     pdfPages.children.append(pdfPage)
+    pdfPage.contents.append(pdfStream)
+
+    context = PDFTextStreamContext(pdfStream)
+
+    context.beginTextBlock()
+    context.setFont("F1", 12)
+    context.moveTo(100,100)
+    context.drawText("Hello world!")
+    context.endTextBlock()
 
     pdfWriter.writeDocument("test_pdf.txt", pdfDocument)
