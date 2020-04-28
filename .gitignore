@@ -1,6 +1,7 @@
 .vs/*
 *.doc
 *.docx
+*.pdf
 load_book.py
 
 # Byte-compiled / optimized / DLL files
