@@ -75,7 +75,7 @@ class PDFTextStreamContext(object):
         self._setStreamObjectLength()
 
     def endTextBlock(self):
-        self._streamObject.data += "ET "
+        self._streamObject.data += "ET\n"
         self._setStreamObjectLength()
 
     def setFont(self, fontName, fontSize):
@@ -391,7 +391,7 @@ class PDFWriter(object):
             self._write("stream\n")
             if pdfIndirectObject.data != None:
                 self._write(pdfIndirectObject.data)
-            self._write("\nendstream\n")
+            self._write("endstream\n")
 
         self._write("endobj\n")
 
@@ -479,34 +479,60 @@ class PDFWriter(object):
         self._write("{0} {1} R".format(pdfObjectReference.id, pdfObjectReference.generation))
 
 
+class PDFDocumentContext(object):
+    def __init__(self):
+        self._pdfWriter = PDFWriter()
+        self._pdfDocument = None
+        self._pdfPages = None
+        self._currentPage = None
+        self._currentContentStream = None
+        self._currentTextStreamContext = None
+
+    def newDocument(self):
+        self._pdfDocument = PDFDocument()
+        self._pdfPages = PDFPagesObject()
+
+        self._pdfDocument.trailer.root.pages = self._pdfPages
+
+    def saveDocument(self, filePath):
+        self._pdfWriter.writeDocument(filePath, self._pdfDocument)
+
+    def addPage(self, pageWidth=595.4, pageHeight=842):
+        self._currentPage = PDFPageObject()
+
+        self._currentPage.mediaBoxWidth = pageWidth
+        self._currentPage.mediaBoxHeight = pageHeight
+
+        self._currentContentStream = PDFStreamObject()
+        self._currentTextStreamContext = PDFTextStreamContext(self._currentContentStream)
+
+        self._pdfPages.children.append(self._currentPage)
+        self._currentPage.contents.append(self._currentContentStream)
+
+    def _transformX(self, x):
+        return x
+
+    def _transformY(self, y):
+        pageHeight = self._currentPage.mediaBoxHeight
+
+        return pageHeight - y
+
+    def drawText(self, text, x, y, fontName="Times", fontHeight=12):
+        self._currentTextStreamContext.beginTextBlock()
+        self._currentTextStreamContext.setFont("F0", fontHeight)
+        self._currentTextStreamContext.moveTo(self._transformX(x), self._transformY(y))
+        self._currentTextStreamContext.drawText(text)
+        self._currentTextStreamContext.endTextBlock()
+
+
 if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO)
 
-    pdfWriter = PDFWriter()
+    context = PDFDocumentContext()
 
-    pdfDocument = PDFDocument()
-
-    pdfDocument.trailer.info.title = "asd"
-    pdfDocument.trailer.info.subject = "asd"
-    pdfDocument.trailer.info.keywords = "asd"
-    pdfDocument.trailer.info.author = "asd"
-
-    pdfPages = PDFPagesObject()
-    pdfPage = PDFPageObject()
-    pdfStream = PDFStreamObject()
-
-    pdfDocument.trailer.root.pages = pdfPages
-    pdfPages.children.append(pdfPage)
-    pdfPage.contents.append(pdfStream)
-
-    context = PDFTextStreamContext(pdfStream)
-
-    context.beginTextBlock()
-    context.setFont("F0", 12)
-    context.moveTo(100, 100)
-    context.drawText("Hello world!")
-    context.endTextBlock()
-
-    pdfWriter.writeDocument("test_pdf.txt", pdfDocument)
-    pdfWriter.writeDocument("test_pdf.pdf", pdfDocument)
+    context.newDocument()
+    context.addPage()
+    context.drawText("Hello world.", 100, 200)
+    context.saveDocument("test_pdf.txt")
+    context.saveDocument("test_pdf.pdf")
