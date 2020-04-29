@@ -35,7 +35,7 @@ class PDFDocument (object):
 
 
 class PDFHeader(object):
-    def __init__(self, version="1.4"):
+    def __init__(self, version="1.1"):
         self.version = version
 
 
@@ -143,12 +143,19 @@ class PDFPagesObject(PDFIndirectObject):
                 self.count += 1
 
     def getDictionary(self):
-        return [
-            (PDFName("Type"), PDFName("Pages")),
-            (PDFName("Parent"), self.parent.getObjectReference()),
-            (PDFName("Kids"), [c.getObjectReference() for c in self.children]),
-            (PDFName("Count"), PDFNumber(self.count)),
-        ]
+        if self.parent != None:
+            return [
+                (PDFName("Type"), PDFName("Pages")),
+                (PDFName("Parent"), self.parent.getObjectReference()),
+                (PDFName("Kids"), [c.getObjectReference() for c in self.children]),
+                (PDFName("Count"), PDFNumber(self.count)),
+            ]
+        else:
+            return [
+                (PDFName("Type"), PDFName("Pages")),
+                (PDFName("Kids"), [c.getObjectReference() for c in self.children]),
+                (PDFName("Count"), PDFNumber(self.count)),
+            ]
 
 
 class PDFPageObject(PDFIndirectObject):
@@ -165,7 +172,7 @@ class PDFPageObject(PDFIndirectObject):
         self.resources = {
             "Font": {
                 "F0": {
-                    "BaseFont": PDFName("Times"),
+                    "BaseFont": PDFName("Times-Italic"),
                     "Type": PDFName("Font"),
                     "Subtype": PDFName("Type1")
                 }
@@ -221,7 +228,6 @@ class PDFDocumentCatalogObject(PDFIndirectObject):
     def setIds(self):
 
         self.pages.id = self.id + 1
-        self.pages.parent = self
         self.pages.setIds()
 
     def getDictionary(self):
@@ -292,6 +298,7 @@ class PDFWriter(object):
 
     def _writeHeader(self, fileObject, pdfHeader):
         self._write("%PDF-{0}\n".format(pdfHeader.version))
+        self._write("%áéíóú\n")
 
     def _writeCrossReferenceTable(self, fileObject, pdfCrossReferenceTable):
         self._write("xref\n")
@@ -299,12 +306,13 @@ class PDFWriter(object):
 
         #for entry in sorted(pdfCrossReferenceTable.entries, key=lambda x: x.orderIndex):
         for index, entry in enumerate( pdfCrossReferenceTable.entries):
+            if index == len( pdfCrossReferenceTable.entries) - 1:
+                pdfCrossReferenceTable.byteOffset = self._currentByteLength
+
             fn = "n" if entry.inUse == True else "f"
 
             self._write("{:010d} {:05d} {}\n".format(entry.byteOffset, entry.generationNumber, fn))
 
-            if index == len( pdfCrossReferenceTable.entries) - 1:
-                pdfCrossReferenceTable.byteOffset = self._currentByteLength
 
     def _writeTrailer(self, fileObject, pdfTrailer):
         self._write("trailer")
@@ -436,13 +444,19 @@ if __name__ == "__main__":
     pdfWriter = PDFWriter()
 
     pdfDocument = PDFDocument()
+
+    pdfDocument.trailer.info.title = "asd"
+    pdfDocument.trailer.info.subject = "asd"
+    pdfDocument.trailer.info.keywords = "asd"
+    pdfDocument.trailer.info.author = "asd"
+
     pdfPages = PDFPagesObject()
     pdfPage = PDFPageObject()
     pdfStream = PDFStreamObject()
 
     pdfDocument.trailer.root.pages = pdfPages
     pdfPages.children.append(pdfPage)
-    #pdfPage.contents.append(pdfStream)
+    pdfPage.contents.append(pdfStream)
 
     context = PDFTextStreamContext(pdfStream)
 
