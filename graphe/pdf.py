@@ -82,6 +82,14 @@ class PDFTextStreamContext(object):
         self._streamObject.data += "/{0} {1} Tf ".format(fontName, fontSize)
         self._setStreamObjectLength()
 
+    def setCharacterSpacing(self, characterSpacing = 0):
+        self._streamObject.data += "{0} Tc".format(characterSpacing)
+        self._setStreamObjectLength()
+
+    def setWordSpacing(self, wordSpacing = 0):
+        self._streamObject.data += "{0} Tw".format(wordSpacing)
+        self._setStreamObjectLength()
+        
     def moveTo(self, x, y):
         self._streamObject.data += "{0} {1} Td ".format(x, y)
         self._setStreamObjectLength()
@@ -534,5 +542,7 @@ if __name__ == "__main__":
     context.newDocument()
     context.addPage()
     context.drawText("Hello world.", 100, 200)
+    context.addPage()
+    context.drawText("Page 2", 100, 200)
     context.saveDocument("test_pdf.txt")
     context.saveDocument("test_pdf.pdf")

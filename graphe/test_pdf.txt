@@ -3,8 +3,8 @@
 3 0 obj
 <<
 	/Type /Pages
-	/Kids [4 0 R]
-	/Count 1
+	/Kids [4 0 R 6 0 R]
+	/Count 2
 >>
 endobj
 4 0 obj
@@ -22,7 +22,25 @@ endobj
 	/Length 45
 >>
 stream
-BT /F0 12 Tf 100 200 Td (Hello world.) Tj ET
+BT /F0 12 Tf 100 642 Td (Hello world.) Tj ET
+endstream
+endobj
+6 0 obj
+<<
+	/Type /Page
+	/Parent 3 0 R
+	/Rotate 0
+	/MediaBox [0.000000 0.000000 595.400000 842]
+	/Contents [7 0 R]
+	/Resources << /Font << /F0 << /BaseFont /Garamond /Type /Font /Subtype /Type1 >> >> >>
+>>
+endobj
+7 0 obj
+<<
+	/Length 39
+>>
+stream
+BT /F0 12 Tf 100 642 Td (Page 2) Tj ET
 endstream
 endobj
 2 0 obj
@@ -38,24 +56,26 @@ endobj
 	/Keywords ()
 	/Author ()
 	/Creator (Graphe)
-	/CreationDate (D:20200429222711Z)
-	/ModDate (D:20200429222711Z)
+	/CreationDate (D:20200429224538Z)
+	/ModDate (D:20200429224538Z)
 >>
 endobj
 xref
-0 6
+0 8
 0000000000 65535 f
 0000000021 00000 n
-0000000081 00000 n
-0000000294 00000 n
-0000000389 00000 n
-0000000440 00000 n
+0000000087 00000 n
+0000000300 00000 n
+0000000395 00000 n
+0000000608 00000 n
+0000000697 00000 n
+0000000748 00000 n
 trailer
 <<
 	/Root 2 0 R
 	/Info 1 0 R
-	/Size 6
+	/Size 8
 >>
 startxref
-699
+1045
 %%EOF
