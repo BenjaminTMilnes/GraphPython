@@ -14,7 +14,7 @@ endobj
 	/Rotate 0
 	/MediaBox [0.000000 0.000000 500.000000 500.000000]
 	/Contents [5 0 R]
-	/Resources << /Font << /F0 << /BaseFont /Times-Italic /Type /Font /Subtype /Type1 >> >> >>
+	/Resources << /Font << /F0 << /BaseFont /Garamond /Type /Font /Subtype /Type1 >> >> >>
 >>
 endobj
 5 0 obj
@@ -38,8 +38,8 @@ endobj
 	/Keywords (asd)
 	/Author (asd)
 	/Creator (Graphe)
-	/CreationDate (D:20200429203940Z)
-	/ModDate (D:20200429203940Z)
+	/CreationDate (D:20200429210936Z)
+	/ModDate (D:20200429210936Z)
 >>
 endobj
 xref
@@ -47,9 +47,9 @@ xref
 0000000000 65535 f
 0000000021 00000 n
 0000000081 00000 n
-0000000305 00000 n
-0000000401 00000 n
-0000000452 00000 n
+0000000301 00000 n
+0000000397 00000 n
+0000000448 00000 n
 trailer
 <<
 	/Root 2 0 R
@@ -57,5 +57,5 @@ trailer
 	/Size 6
 >>
 startxref
-723
+719
 %%EOF

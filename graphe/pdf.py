@@ -22,7 +22,6 @@ class PDFNumber (object):
         self.value = value
 
 
-
 class PDFObjectReference(object):
     def __init__(self, _id, generation):
         self.id = _id
@@ -67,10 +66,10 @@ class PDFTextStreamContext(object):
     def __init__(self, streamObject):
         self._streamObject = streamObject
         self._streamObject.data = ""
-    
+
     def _setStreamObjectLength(self):
         self._streamObject.length = len(self._streamObject.data)
-    
+
     def beginTextBlock(self):
         self._streamObject.data += "BT "
         self._setStreamObjectLength()
@@ -91,6 +90,7 @@ class PDFTextStreamContext(object):
         self._streamObject.data += "({0}) Tj ".format(text)
         self._setStreamObjectLength()
 
+
 class PDFDocument (object):
     def __init__(self):
         self.header = PDFHeader()
@@ -107,6 +107,9 @@ class PDFDocument (object):
     def getNewId(self):
         self._nextId += 1
         return self._nextId - 1
+
+    def resetId(self):
+        self._nextId = 1
 
 
 class PDFHeader(object):
@@ -155,6 +158,7 @@ class PDFTrailer(object):
         self.info.document = self.document
         self.root.document = self.document
 
+        self.document.resetId()
         self.info.setIds()
         self.root.setIds()
 
@@ -208,6 +212,7 @@ class PDFDocumentCatalogObject(PDFIndirectObject):
             "Pages": self.pages.getObjectReference()
         }
 
+
 class PDFPagesObject(PDFIndirectObject):
     def __init__(self):
         super().__init__()
@@ -259,7 +264,7 @@ class PDFPageObject(PDFIndirectObject):
         self.resources = {
             "Font": {
                 "F0": {
-                    "BaseFont": PDFName("Times-Italic"),
+                    "BaseFont": PDFName("Garamond"),
                     "Type": PDFName("Font"),
                     "Subtype": PDFName("Type1")
                 }
@@ -284,14 +289,17 @@ class PDFPageObject(PDFIndirectObject):
         }
 
 
-
-
 class PDFWriter(object):
     def __init__(self):
+        self._logger = logging.getLogger(__name__)
+
         self._fileObject = None
         self._currentByteLength = 0
 
     def writeDocument(self, filePath, pdfDocument):
+        self._logger.info("Writing PDF to {0}".format(filePath))
+        self._logger.info("Setting document ids")
+
         pdfDocument.trailer.setIds()
         self._document = pdfDocument
 
@@ -299,18 +307,26 @@ class PDFWriter(object):
             self._fileObject = fileObject
             self._currentByteLength = 0
 
-            self._writeHeader( pdfDocument.header)
+            self._logger.info("Writing PDF header")
 
-            self._writePageObject( pdfDocument.trailer.root.pages)
+            self._writeHeader(pdfDocument.header)
 
-            self._writeIndirectObject( pdfDocument.trailer.root)
-            self._writeIndirectObject( pdfDocument.trailer.info)
+            self._logger.info("Writing PDF body")
 
-            self._writeCrossReferenceTable( pdfDocument.crossReferenceTable)
+            self._writePageObject(pdfDocument.trailer.root.pages)
 
-            pdfDocument.trailer.size =  pdfDocument.crossReferenceTable.length
+            self._writeIndirectObject(pdfDocument.trailer.root)
+            self._writeIndirectObject(pdfDocument.trailer.info)
 
-            self._writeTrailer( pdfDocument.trailer)
+            self._logger.info("Writing PDF cross reference table")
+
+            self._writeCrossReferenceTable(pdfDocument.crossReferenceTable)
+
+            pdfDocument.trailer.size = pdfDocument.crossReferenceTable.length
+
+            self._logger.info("Writing PDF trailer")
+
+            self._writeTrailer(pdfDocument.trailer)
 
             self._write("startxref\n")
             self._write("{}\n".format(pdfDocument.crossReferenceTable.byteOffset))
@@ -333,14 +349,13 @@ class PDFWriter(object):
         self._write("xref\n")
         self._write("{0} {1}\n".format(0, pdfCrossReferenceTable.length))
 
-        for index, entry in enumerate( pdfCrossReferenceTable.entries):
-            if index ==  pdfCrossReferenceTable.length - 1:
+        for index, entry in enumerate(pdfCrossReferenceTable.entries):
+            if index == pdfCrossReferenceTable.length - 1:
                 pdfCrossReferenceTable.byteOffset = self._currentByteLength
 
             fn = "n" if entry.inUse == True else "f"
 
             self._write("{:010d} {:05d} {}\n".format(entry.byteOffset, entry.generationNumber, fn))
-
 
     def _writeTrailer(self, pdfTrailer):
         self._write("trailer")
@@ -348,16 +363,18 @@ class PDFWriter(object):
 
     def _writePageObject(self, pdfPage):
 
-        self._writeIndirectObject( pdfPage)
+        self._writeIndirectObject(pdfPage)
 
         if isinstance(pdfPage, PDFPagesObject):
             for p in pdfPage.children:
-                self._writePageObject( p)
+                self._writePageObject(p)
         elif isinstance(pdfPage, PDFPageObject):
             for c in pdfPage.contents:
-                self._writeIndirectObject( c)
+                self._writeIndirectObject(c)
 
     def _writeIndirectObject(self, pdfIndirectObject):
+        self._logger.info("Writing object {0}".format(pdfIndirectObject.id))
+
         pdfIndirectObject.byteOffset = self._currentByteLength
 
         entry = PDFCrossReferenceTableEntry()
@@ -368,7 +385,7 @@ class PDFWriter(object):
 
         self._write("{0} {1} obj".format(pdfIndirectObject.id, pdfIndirectObject.generation))
 
-        self._writeDictionary( pdfIndirectObject.getDictionary())
+        self._writeDictionary(pdfIndirectObject.getDictionary())
 
         if isinstance(pdfIndirectObject, PDFStreamObject):
             self._write("stream\n")
@@ -391,24 +408,24 @@ class PDFWriter(object):
             if not inline:
                 self._write("\t")
 
-            self._writeName( a)
+            self._writeName(a)
 
             self._write(" ")
 
             if isinstance(b, PDFObjectReference):
-                self._writeObjectReference( b)
+                self._writeObjectReference(b)
             if isinstance(b, PDFName):
-                self._writeName( b)
+                self._writeName(b)
             if isinstance(b, PDFString):
-                self._writeString( b)
+                self._writeString(b)
             if isinstance(b, PDFNumber):
-                self._writeNumber( b)
+                self._writeNumber(b)
             if isinstance(b, PDFDate):
-                self._writeDate( b)
+                self._writeDate(b)
             if isinstance(b, list):
-                self._writeList( b)
+                self._writeList(b)
             if isinstance(b, dict):
-                self._writeDictionary( b, True)
+                self._writeDictionary(b, True)
 
             if not inline:
                 self._write("\n")
@@ -431,15 +448,15 @@ class PDFWriter(object):
             n += 1
 
             if isinstance(item, PDFObjectReference):
-                self._writeObjectReference( item)
+                self._writeObjectReference(item)
             if isinstance(item, PDFName):
-                self._writeName( item)
+                self._writeName(item)
             if isinstance(item, PDFString):
-                self._writeString( item)
+                self._writeString(item)
             if isinstance(item, PDFNumber):
-                self._writeNumber( item)
+                self._writeNumber(item)
             if isinstance(item, PDFDate):
-                self._writeDate( item)
+                self._writeDate(item)
 
         self._write("]")
 
@@ -463,6 +480,8 @@ class PDFWriter(object):
 
 
 if __name__ == "__main__":
+
+    logging.basicConfig(level=logging.INFO)
 
     pdfWriter = PDFWriter()
 
