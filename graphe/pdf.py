@@ -71,11 +71,11 @@ class PDFTextStreamContext(object):
         self._streamObject.length = len(self._streamObject.data)
 
     def beginTextBlock(self):
-        self._streamObject.data += "BT "
+        self._streamObject.data += "BT \n\t"
         self._setStreamObjectLength()
 
     def endTextBlock(self):
-        self._streamObject.data += "ET\n"
+        self._streamObject.data += "\nET \n"
         self._setStreamObjectLength()
 
     def setFont(self, fontName, fontSize):
@@ -83,11 +83,23 @@ class PDFTextStreamContext(object):
         self._setStreamObjectLength()
 
     def setCharacterSpacing(self, characterSpacing = 0):
-        self._streamObject.data += "{0} Tc".format(characterSpacing)
+        self._streamObject.data += "{0} Tc ".format(characterSpacing)
         self._setStreamObjectLength()
 
     def setWordSpacing(self, wordSpacing = 0):
-        self._streamObject.data += "{0} Tw".format(wordSpacing)
+        self._streamObject.data += "{0} Tw ".format(wordSpacing)
+        self._setStreamObjectLength()
+
+    def setHorizontalScaling(self, horizontalScaling = 100):
+        self._streamObject.data += "{0} Tz ".format(horizontalScaling)
+        self._setStreamObjectLength()
+
+    def setLeading(self, leading = 0):
+        self._streamObject.data += "{0} TL ".format(leading)
+        self._setStreamObjectLength()
+
+    def setRise(self, rise = 0):
+        self._streamObject.data += "{0} Ts ".format(rise)
         self._setStreamObjectLength()
         
     def moveTo(self, x, y):
@@ -96,6 +108,14 @@ class PDFTextStreamContext(object):
 
     def drawText(self, text):
         self._streamObject.data += "({0}) Tj ".format(text)
+        self._setStreamObjectLength()
+
+    def moveToNextLine(self):
+        self._streamObject.data += "T* \n\t"
+        self._setStreamObjectLength()
+
+    def setFillColourRGB(self, r = 0, g = 0, b = 0):
+        self._streamObject.data += "/DeviceRGB cs {0} {1} {2} sc ".format(r, g, b)
         self._setStreamObjectLength()
 
 
@@ -272,7 +292,7 @@ class PDFPageObject(PDFIndirectObject):
         self.resources = {
             "Font": {
                 "F0": {
-                    "BaseFont": PDFName("Garamond"),
+                    "BaseFont": PDFName("EBGaramond"),
                     "Type": PDFName("Font"),
                     "Subtype": PDFName("Type1")
                 }
@@ -505,7 +525,7 @@ class PDFDocumentContext(object):
     def saveDocument(self, filePath):
         self._pdfWriter.writeDocument(filePath, self._pdfDocument)
 
-    def addPage(self, pageWidth=595.4, pageHeight=842):
+    def addPage(self, pageWidth=364.32, pageHeight=562.32):
         self._currentPage = PDFPageObject()
 
         self._currentPage.mediaBoxWidth = pageWidth
@@ -527,11 +547,48 @@ class PDFDocumentContext(object):
 
     def drawText(self, text, x, y, fontName="Times", fontHeight=12):
         self._currentTextStreamContext.beginTextBlock()
-        self._currentTextStreamContext.setFont("F0", fontHeight)
         self._currentTextStreamContext.moveTo(self._transformX(x), self._transformY(y))
+        self._currentTextStreamContext.setFont("F0", fontHeight)
         self._currentTextStreamContext.drawText(text)
         self._currentTextStreamContext.endTextBlock()
 
+    def drawTextBlock(self, textBlock):
+        self._currentTextStreamContext.beginTextBlock()
+        self._currentTextStreamContext.moveTo(self._transformX(textBlock.x), self._transformY(textBlock.y))
+        self._currentTextStreamContext.setLeading(textBlock.leading)
+
+        for section in textBlock.sections:
+            if isinstance(section, str) and section == "newline":
+                self._currentTextStreamContext.moveToNextLine()
+            if isinstance(section, TextSection):
+                self._currentTextStreamContext.setFont("F0", section.fontHeight)
+                self._currentTextStreamContext.setCharacterSpacing(section.characterSpacing)
+                self._currentTextStreamContext.setWordSpacing(section.wordSpacing)
+                self._currentTextStreamContext.drawText(section.text)
+        
+        self._currentTextStreamContext.endTextBlock()
+
+class TextBlock(object):
+    def __init__(self, x, y, leading = 12):
+        self.x = x
+        self.y = y
+        self.leading = leading
+
+        self.sections = []
+
+    def addTextSection(self, text,   fontName = "Times",  fontHeight = 12, characterSpacing = 0, wordSpacing=0 ):
+        self.sections.append(TextSection(text, fontName, fontHeight, characterSpacing, wordSpacing))
+
+    def newLine(self):
+        self.sections.append("newline")
+
+class TextSection(object):
+    def __init__(self, text,   fontName = "Times",  fontHeight = 12, characterSpacing = 0, wordSpacing=0):
+        self.text = text
+        self.fontName = fontName
+        self.fontHeight = fontHeight
+        self.characterSpacing = characterSpacing
+        self.wordSpacing = wordSpacing
 
 if __name__ == "__main__":
 
@@ -541,7 +598,18 @@ if __name__ == "__main__":
 
     context.newDocument()
     context.addPage()
-    context.drawText("Hello world.", 100, 200)
+
+    textBlock = TextBlock(100,100)
+
+    textBlock.addTextSection("This is the first line.", "Times", 12, 0, 1)
+    textBlock.newLine()
+    textBlock.addTextSection("This is the ")
+    textBlock.addTextSection("second", "Times-Italic")
+    textBlock.addTextSection(" line.")
+    textBlock.newLine()
+    textBlock.addTextSection("This is the third line.")
+
+    context.drawTextBlock(textBlock)
     context.addPage()
     context.drawText("Page 2", 100, 200)
     context.saveDocument("test_pdf.txt")
