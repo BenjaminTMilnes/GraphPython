@@ -1,5 +1,6 @@
 from graphe.core import *
 from graphe.docx import *
+from graphe.latex import *
 from morphe.core import *
 import json
 import logging
@@ -19,6 +20,9 @@ print(len(morpheDocument.styleRules))
 
 resolver.applyMorpheDocumentToGrapheDocument(morpheDocument, document)
 
-exporter = WordExporter()
+exporter = LaTeXExporter()
+exporter.exportDocument(document, "examples/example1.tex")
 
-exporter.exportDocument(document, "examples/example1.docx")
+#exporter = WordExporter()
+
+#exporter.exportDocument(document, "examples/example1.docx")
