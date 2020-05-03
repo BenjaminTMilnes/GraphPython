@@ -26,6 +26,9 @@ class LaTeXCommand(object):
         self.newLineBefore = False
         self.newLineAfter = False
 
+    def setText(self, text):
+        self.subelements = [LaTeXTextElement(text)]
+
 
 class LaTeXItalicCommand(LaTeXCommand):
     def __init__(self):
@@ -51,8 +54,7 @@ class LaTeXTitleCommand(LaTeXCommand):
         self.newLineBefore = True
         self.newLineAfter = True
 
-        if text != "":
-            self.subelements.append(LaTeXTextElement(text))
+        self.setText(text)
 
 
 class LaTeXAuthorCommand(LaTeXCommand):
@@ -62,8 +64,7 @@ class LaTeXAuthorCommand(LaTeXCommand):
         self.newLineBefore = True
         self.newLineAfter = True
 
-        if text != "":
-            self.subelements.append(LaTeXTextElement(text))
+        self.setText(text)
 
 
 class LaTeXSectionCommand(LaTeXCommand):
@@ -75,8 +76,19 @@ class LaTeXSectionCommand(LaTeXCommand):
         self.newLineBefore = True
         self.newLineAfter = True
 
-        if text != "":
-            self.subelements.append(LaTeXTextElement(text))
+        self.setText(text)
+
+
+class LaTeXChapterCommand(LaTeXCommand):
+    def __init__(self, text=""):
+        super().__init__("chapter")
+
+        self.withoutNumbering = True
+
+        self.newLineBefore = True
+        self.newLineAfter = True
+
+        self.setText(text)
 
 
 class LaTeXEnvironment(object):
@@ -116,7 +128,7 @@ class LaTeXWriter(object):
 
             fileObject.write("\{0}".format(element.name))
 
-            if element.name in ["section"] and element.withoutNumbering == True:
+            if element.name in ["chapter", "section", "subsection"] and element.withoutNumbering == True:
                 fileObject.write("*")
 
             if len(element.orderedParameters) > 0 or len(element.namedParameters) > 0:
@@ -171,6 +183,26 @@ class LaTeXExporter(object):
 
         latexDocument.subelements.append(LaTeXDocumentClassCommand())
 
+        encoding = LaTeXCommand("usepackage", "inputenc")
+        encoding.orderedParameters.append("utf8")
+        encoding.newLineAfter = True
+
+        geometry = LaTeXCommand("usepackage", "geometry")
+        geometry.namedParameters["paperwidth"] = str( document.sections[0].styleProperties.get("page-width"))
+        geometry.namedParameters["paperheight"] = str( document.sections[0].styleProperties.get("page-height"))
+        geometry.namedParameters["top"] = str( document.sections[0].styleProperties.get("margin-top"))
+        geometry.namedParameters["bottom"] = str( document.sections[0].styleProperties.get("margin-bottom"))
+        geometry.namedParameters["left"] = str( document.sections[0].styleProperties.get("margin-left"))
+        geometry.namedParameters["right"] = str( document.sections[0].styleProperties.get("margin-right"))
+        geometry.newLineAfter = True
+
+        ebgaramond = LaTeXCommand("usepackage", "ebgaramond")
+        ebgaramond.newLineAfter = True
+
+        latexDocument.subelements.append(encoding)
+        latexDocument.subelements.append(geometry)
+        latexDocument.subelements.append(ebgaramond)
+
         title = LaTeXTitleCommand(document.title)
         author = LaTeXAuthorCommand(self.getAuthorsList(document))
 
@@ -182,23 +214,44 @@ class LaTeXExporter(object):
         latexDocument.subelements.append(documentEnvironment)
 
         for section in document.sections:
-            s = LaTeXSectionCommand()
-
-            documentEnvironment.subelements.append(s)
-
-            for element in section.subelements:
-                if isinstance(element, GParagraph):
-                    p = LaTeXParagraph()
-
-                    for subelement in element.subelements:
-                        if isinstance(subelement, GTextElement):
-                            t = LaTeXTextElement(subelement.text)
-                            p.subelements.append(t)
-
-                    documentEnvironment.subelements.append(p)
+            self.exportSection(section, documentEnvironment)
 
         latexWriter = LaTeXWriter()
         latexWriter.writeDocument(filePath, latexDocument)
+
+    def exportSection(self, section, documentEnvironment):
+        if len(section.subelements) > 0 and isinstance(section.subelements[0], GHeading):
+            sectionHeading = section.subelements[0]
+
+            if isinstance(sectionHeading.subelements[0], GTextElement):
+                sectionHeadingText = sectionHeading.subelements[0].text
+            else:
+                sectionHeadingText = ""
+
+            subelements = section.subelements[1:]
+        else:
+            sectionHeadingText = ""
+            subelements = section.subelements
+
+        s = LaTeXChapterCommand(sectionHeadingText)
+
+        documentEnvironment.subelements.append(s)
+
+        for element in subelements:
+            if isinstance(element, GParagraph):
+                p = LaTeXParagraph()
+
+                for subelement in element.subelements:
+                    if isinstance(subelement, GTextElement):
+                        t = LaTeXTextElement(subelement.text)
+                        p.subelements.append(t)
+                    if isinstance(subelement, GItalic):
+                        text = subelement.subelements[0].text
+                        i = LaTeXItalicCommand()
+                        i.setText(text)
+                        p.subelements.append(i)
+
+                documentEnvironment.subelements.append(p)
 
     def getAuthorsList(self, document):
 
