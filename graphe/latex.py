@@ -16,6 +16,11 @@ class LaTeXParagraph(object):
         self.subelements = []
 
 
+class LaTeXNewLineCommand(object):
+    def __init__(self):
+        pass
+
+
 class LaTeXCommand(object):
     def __init__(self, name, parameterAsSubelement=""):
         self.name = name
@@ -122,6 +127,8 @@ class LaTeXWriter(object):
             fileObject.write("\n")
             self._writeElements(fileObject, element.subelements)
             fileObject.write("\n")
+        elif isinstance(element, LaTeXNewLineCommand):
+            fileObject.write(" \\\\ ")
         elif isinstance(element, LaTeXCommand):
             if element.newLineBefore:
                 fileObject.write("\n")
@@ -157,7 +164,7 @@ class LaTeXWriter(object):
                 fileObject.write("{")
                 fileObject.write("{0}".format(element.parameterAsSubelement))
                 fileObject.write("}")
-            else:
+            elif len(element.subelements) > 0:
                 fileObject.write("{")
                 self._writeElements(fileObject, element.subelements)
                 fileObject.write("}")
@@ -188,12 +195,12 @@ class LaTeXExporter(object):
         encoding.newLineAfter = True
 
         geometry = LaTeXCommand("usepackage", "geometry")
-        geometry.namedParameters["paperwidth"] = str( document.sections[0].styleProperties.get("page-width"))
-        geometry.namedParameters["paperheight"] = str( document.sections[0].styleProperties.get("page-height"))
-        geometry.namedParameters["top"] = str( document.sections[0].styleProperties.get("margin-top"))
-        geometry.namedParameters["bottom"] = str( document.sections[0].styleProperties.get("margin-bottom"))
-        geometry.namedParameters["left"] = str( document.sections[0].styleProperties.get("margin-left"))
-        geometry.namedParameters["right"] = str( document.sections[0].styleProperties.get("margin-right"))
+        geometry.namedParameters["paperwidth"] = str(document.sections[0].styleProperties.get("page-width"))
+        geometry.namedParameters["paperheight"] = str(document.sections[0].styleProperties.get("page-height"))
+        geometry.namedParameters["top"] = str(document.sections[0].styleProperties.get("margin-top"))
+        geometry.namedParameters["bottom"] = str(document.sections[0].styleProperties.get("margin-bottom"))
+        geometry.namedParameters["left"] = str(document.sections[0].styleProperties.get("margin-left"))
+        geometry.namedParameters["right"] = str(document.sections[0].styleProperties.get("margin-right"))
         geometry.newLineAfter = True
 
         ebgaramond = LaTeXCommand("usepackage", "ebgaramond")
@@ -213,45 +220,79 @@ class LaTeXExporter(object):
 
         latexDocument.subelements.append(documentEnvironment)
 
+        n = 0
+
         for section in document.sections:
+            if n > 0:
+                newpage = LaTeXCommand("newpage")
+                newpage.newLineBefore = True
+                newpage.newLineAfter = True
+
+                documentEnvironment.subelements.append(newpage)
+
             self.exportSection(section, documentEnvironment)
+
+            n += 1
 
         latexWriter = LaTeXWriter()
         latexWriter.writeDocument(filePath, latexDocument)
 
     def exportSection(self, section, documentEnvironment):
-        if len(section.subelements) > 0 and isinstance(section.subelements[0], GHeading):
-            sectionHeading = section.subelements[0]
-
-            if isinstance(sectionHeading.subelements[0], GTextElement):
-                sectionHeadingText = sectionHeading.subelements[0].text
+        if False:
+            if len(section.subelements) > 0 and isinstance(section.subelements[0], GHeading):
+                sectionHeading = section.subelements[0]
+                subelements = section.subelements[1:]
             else:
-                sectionHeadingText = ""
+                sectionHeading = None
+                subelements = section.subelements
 
-            subelements = section.subelements[1:]
+            s = LaTeXChapterCommand()
+
+            if sectionHeading != None:
+                self.exportInlineElements(sectionHeading, s)
+
+            documentEnvironment.subelements.append(s)
         else:
-            sectionHeadingText = ""
             subelements = section.subelements
 
-        s = LaTeXChapterCommand(sectionHeadingText)
-
-        documentEnvironment.subelements.append(s)
-
         for element in subelements:
+            if isinstance(element, GHeading):
+                h = LaTeXParagraph()
+
+                self.exportInlineElements(element, h)
+
+                documentEnvironment.subelements.append(h)
             if isinstance(element, GParagraph):
                 p = LaTeXParagraph()
 
-                for subelement in element.subelements:
-                    if isinstance(subelement, GTextElement):
-                        t = LaTeXTextElement(subelement.text)
-                        p.subelements.append(t)
-                    if isinstance(subelement, GItalic):
-                        text = subelement.subelements[0].text
-                        i = LaTeXItalicCommand()
-                        i.setText(text)
-                        p.subelements.append(i)
+                self.exportInlineElements(element, p)
+
+                if element.styleProperties.get("text-alignment") == "centred":
+                    documentEnvironment.subelements.append(LaTeXCommand("centering"))
 
                 documentEnvironment.subelements.append(p)
+
+    def exportInlineElements(self, gElement, latexElement):
+
+        for subelement in gElement.subelements:
+            if isinstance(subelement, GTextElement):
+                t = LaTeXTextElement(subelement.text)
+
+                latexElement.subelements.append(t)
+            if isinstance(subelement, GItalic):
+                text = subelement.subelements[0].text
+                i = LaTeXItalicCommand()
+                i.setText(text)
+
+                latexElement.subelements.append(i)
+            if isinstance(subelement, GBold):
+                text = subelement.subelements[0].text
+                b = LaTeXBoldCommand()
+                b.setText(text)
+
+                latexElement.subelements.append(b)
+            if isinstance(subelement, GLineBreak):
+                latexElement.subelements.append(LaTeXNewLineCommand())
 
     def getAuthorsList(self, document):
 
