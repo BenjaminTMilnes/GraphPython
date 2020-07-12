@@ -6,6 +6,8 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from datetime import datetime
 import logging
 
+logging.basicConfig(level=logging.DEBUG)
+
 alignments = {
     "justified": WD_ALIGN_PARAGRAPH.JUSTIFY,
     "left-justified": WD_ALIGN_PARAGRAPH.JUSTIFY,
@@ -44,11 +46,11 @@ class WordExportContext(object):
         self.currentSection.bottom_margin = bottomMargin
         self.currentSection.left_margin = leftMargin
 
-    def addHeading(self, level, textAlignment="left", marginTop = 0, marginBottom = 0):
+    def addHeading(self, level, textAlignment, marginTop, marginBottom):
         self.currentParagraph = self.dx.add_paragraph("")
         self.currentParagraph.alignment = alignments.get(textAlignment, WD_ALIGN_PARAGRAPH.LEFT)
-        self.currentParagraph.paragraph_format.space_before = Pt(marginTop)
-        self.currentParagraph.paragraph_format.space_after = Pt(marginBottom)
+        self.currentParagraph.paragraph_format.space_before = marginTop
+        self.currentParagraph.paragraph_format.space_after = marginBottom
 
         return
 
@@ -58,18 +60,18 @@ class WordExportContext(object):
             level = 1
         self.currentParagraph = self.dx.add_heading("", level)
 
-    def addParagraph(self, textAlignment="left", marginTop = 0, marginBottom = 0, lineHeight = 12, textIndentation = 0):
+    def addParagraph(self, textAlignment, marginTop, marginBottom, lineHeight, textIndentation):
         self.currentParagraph = self.dx.add_paragraph("")
         self.currentParagraph.alignment = alignments.get(textAlignment, WD_ALIGN_PARAGRAPH.LEFT)
-        self.currentParagraph.paragraph_format.space_before = Pt(marginTop)
-        self.currentParagraph.paragraph_format.space_after = Pt(marginBottom)
-        self.currentParagraph.paragraph_format.line_spacing = Pt(lineHeight)
-        self.currentParagraph.paragraph_format.first_line_indent = Pt(textIndentation)
+        self.currentParagraph.paragraph_format.space_before = marginTop
+        self.currentParagraph.paragraph_format.space_after = marginBottom
+        self.currentParagraph.paragraph_format.line_spacing = lineHeight
+        self.currentParagraph.paragraph_format.first_line_indent = textIndentation
 
-    def addRun(self, text, fontName="Times New Roman", fontHeight=12, bold=False, italic=False, underline=False, strikethrough=False, fontVariant="none"):
+    def addRun(self, text, fontName, fontHeight, bold=False, italic=False, underline=False, strikethrough=False, fontVariant="none"):
         self.currentRun = self.currentParagraph.add_run(text)
         self.currentRun.font.name = fontName
-        self.currentRun.font.size = Pt(fontHeight)
+        self.currentRun.font.size = fontHeight
         self.currentRun.font.bold = bold
         self.currentRun.font.italic = italic
         self.currentRun.font.underline = underline
@@ -90,11 +92,14 @@ class WordExportContext(object):
     def exitSectionHeader(self):
         self.currentParagraph = self.lastParagraph
 
+
 class WordExporter(object):
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
     def _getLength(self, length):
+        self.logger.debug(length)
+
         if length.unit == "mm":
             return Mm(length.number)
         if length.unit == "cm":
@@ -145,28 +150,33 @@ class WordExporter(object):
 
         if isinstance(pageElement, GParagraph):
             textAlignment = pageElement.styleProperties.get("text-alignment", "left")
-            marginTop = pageElement.styleProperties.get("margin-top", GLength(0, "pt")).toPoints().number
-            marginBottom = pageElement.styleProperties.get("margin-bottom", GLength(0, "pt")).toPoints().number
-            textIndentation =  pageElement.styleProperties.get("text-indentation", GLength(0, "pt")).toPoints().number
-            lineHeight =  pageElement.styleProperties.get("line-height", GLength(12, "pt")).toPoints().number
+            marginTop = self._getLength(pageElement.styleProperties.get("margin-top", GLength(0, "pt")))
+            marginBottom = self._getLength(pageElement.styleProperties.get("margin-bottom", GLength(0, "pt")))
+            textIndentation = self._getLength(pageElement.styleProperties.get("text-indentation", GLength(0, "pt")))
+            lineHeight = self._getLength(pageElement.styleProperties.get("line-height", GLength(12, "pt")))
 
             context.addParagraph(textAlignment, marginTop, marginBottom, lineHeight, textIndentation)
             self.exportPageElements(pageElement.subelements, document, context)
 
         if isinstance(pageElement, GHeading):
             textAlignment = pageElement.styleProperties.get("text-alignment", "left")
-            marginTop = pageElement.styleProperties.get("margin-top", GLength(0, "pt")).toPoints().number
-            marginBottom = pageElement.styleProperties.get("margin-bottom", GLength(0, "pt")).toPoints().number
+            marginTop = self._getLength(pageElement.styleProperties.get("margin-top", GLength(0, "pt")))
+            marginBottom = self._getLength(pageElement.styleProperties.get("margin-bottom", GLength(0, "pt")))
 
             context.addHeading(pageElement.level, textAlignment, marginTop, marginBottom)
             self.exportPageElements(pageElement.subelements, document, context)
 
-        if isinstance(pageElement, GDivision):
+        if isinstance(pageElement, GDivision) or isinstance(pageElement, GDefinitionListTerm) or isinstance(pageElement, GDefinitionListDefinition):
             textAlignment = pageElement.styleProperties.get("text-alignment", "left")
-            marginTop = pageElement.styleProperties.get("margin-top", GLength(0, "pt")).toPoints().number
-            marginBottom = pageElement.styleProperties.get("margin-bottom", GLength(0, "pt")).toPoints().number
+            marginTop = self._getLength(pageElement.styleProperties.get("margin-top", GLength(0, "pt")))
+            marginBottom = self._getLength(pageElement.styleProperties.get("margin-bottom", GLength(0, "pt")))
+            textIndentation = self._getLength(pageElement.styleProperties.get("text-indentation", GLength(0, "pt")))
+            lineHeight = self._getLength(pageElement.styleProperties.get("line-height", GLength(12, "pt")))
 
-            context.addParagraph(textAlignment, marginTop, marginBottom)
+            context.addParagraph(textAlignment, marginTop, marginBottom, lineHeight, textIndentation)
+            self.exportPageElements(pageElement.subelements, document, context)
+            
+        if isinstance(pageElement, GDefinitionList):
             self.exportPageElements(pageElement.subelements, document, context)
 
         if isinstance(pageElement, GVariable):
@@ -184,14 +194,18 @@ class WordExporter(object):
 
         if isinstance(pageElement, GItalic):
             self.exportPageElements(pageElement.subelements, document, context)
+            
+        if isinstance(pageElement, GBold):
+            self.exportPageElements(pageElement.subelements, document, context)
 
         if isinstance(pageElement, GTextElement):
             fontName = pageElement.styleProperties.get("font-name", "Times New Roman")
             fontVariant = pageElement.styleProperties.get("font-variant", "none")
-            fontHeight = pageElement.styleProperties.get("font-height", GLength(12, "pt")).toPoints().number
+            fontHeight = self._getLength(pageElement.styleProperties.get("font-height", GLength(12, "pt")))
             fontSlant = True if pageElement.styleProperties.get("font-slant", "none") == "italic" else False
+            fontWeight = True if pageElement.styleProperties.get("font-weight", "none") == "bold" else False
 
-            context.addRun(pageElement.text, fontName, fontHeight, False, fontSlant, False, False, fontVariant)
+            context.addRun(pageElement.text, fontName, fontHeight, fontWeight, fontSlant, False, False, fontVariant)
 
         if isinstance(pageElement, GLineBreak):
             context.addLineBreak()

@@ -173,14 +173,47 @@ class GListItem(GContentElement):
 
 class GDefinitionList(GContentElement):
     _elementNames = ["definition-list", "dl"]
+
+    def __init__(self):
+
+        self.styleProperties = {
+            "font-name": "inherit",
+            "font-variant": "inherit",
+            "font-height": "inherit",
+            "font-weight": "inherit",
+            "font-slant": "inherit",
+            "text-alignment": "inherit",
+        }
     
 
 class GDefinitionListTerm(GContentElement):
     _elementNames = ["definition-list-term", "dt"]
+
+    def __init__(self):
+
+        self.styleProperties = {
+            "font-name": "inherit",
+            "font-variant": "inherit",
+            "font-height": "inherit",
+            "font-weight": "inherit",
+            "font-slant": "inherit",
+            "text-alignment": "inherit",
+        }
     
 
 class GDefinitionListDefinition(GContentElement):
     _elementNames = ["definition-list-definition", "dd"]
+
+    def __init__(self):
+
+        self.styleProperties = {
+            "font-name": "inherit",
+            "font-variant": "inherit",
+            "font-height": "inherit",
+            "font-weight": "inherit",
+            "font-slant": "inherit",
+            "text-alignment": "inherit",
+        }
 
 
 class GVariable(GContentElement):
@@ -654,6 +687,10 @@ class StyleResolver(object):
                 if len(allElements) > 0:
                     allElements = [allElements[0]]
                 continue
+            
+            if isinstance(selector, MSubelementSelector):
+                allElements = self.selectNthOrderSubelements(allElements)
+                continue
 
         for e in allElements:
             for p in styleRule.properties:
@@ -662,6 +699,15 @@ class StyleResolver(object):
     def applyMorpheDocumentToGrapheDocument(self, morpheDocument, grapheDocument):
         for styleRule in morpheDocument.styleRules:
             self.applyStyleRuleToDocument(styleRule, grapheDocument)
+
+        allElements = self.linearise(grapheDocument.sections)
+
+        for element in allElements:
+            if isinstance(element, GContentElement):
+                styleProperties = importMorpheProperties(element.style)
+
+                for styleProperty in styleProperties:
+                    self.applyStylePropertyToElement(styleProperty, 1, element)
 
         for section in grapheDocument.sections:
             self.cascadeToSubelements(section)
