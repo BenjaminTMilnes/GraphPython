@@ -3,6 +3,7 @@
 *.docx
 *.pdf
 load_book.py
+load_book2.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

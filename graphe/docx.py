@@ -119,12 +119,12 @@ class WordExporter(object):
         dx.save(filePath)
 
     def exportSection(self, section, document, context):
-        pageWidth = self._getLength(section.styleProperties.get("page-width"))
-        pageHeight = self._getLength(section.styleProperties.get("page-height"))
-        marginTop = self._getLength(section.styleProperties.get("margin-top"))
-        marginRight = self._getLength(section.styleProperties.get("margin-right"))
-        marginBottom = self._getLength(section.styleProperties.get("margin-bottom"))
-        marginLeft = self._getLength(section.styleProperties.get("margin-left"))
+        pageWidth = self._getLength(section.styleProperties.get("page-width", GLength(12.85, "cm")))
+        pageHeight = self._getLength(section.styleProperties.get("page-height", GLength(19.84, "cm")))
+        marginTop = self._getLength(section.styleProperties.get("margin-top", GLength(1.5, "cm")))
+        marginRight = self._getLength(section.styleProperties.get("margin-right", GLength(1.5, "cm")))
+        marginBottom = self._getLength(section.styleProperties.get("margin-bottom", GLength(1.5, "cm")))
+        marginLeft = self._getLength(section.styleProperties.get("margin-left", GLength(1.5, "cm")))
 
         context.addSection(pageWidth, pageHeight, marginTop, marginRight, marginBottom, marginLeft)
 

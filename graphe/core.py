@@ -169,6 +169,18 @@ class GOrderedList(GContentElement):
 
 class GListItem(GContentElement):
     _elementNames = ["list-item", "li"]
+    
+
+class GDefinitionList(GContentElement):
+    _elementNames = ["definition-list", "dl"]
+    
+
+class GDefinitionListTerm(GContentElement):
+    _elementNames = ["definition-list-term", "dt"]
+    
+
+class GDefinitionListDefinition(GContentElement):
+    _elementNames = ["definition-list-definition", "dd"]
 
 
 class GVariable(GContentElement):
@@ -491,6 +503,12 @@ class GImporter(object):
             e = GUnorderedList()
         if xmlElement.name in GListItem._elementNames:
             e = GListItem()
+        if xmlElement.name in GDefinitionList._elementNames:
+            e = GDefinitionList()
+        if xmlElement.name in GDefinitionListTerm._elementNames:
+            e = GDefinitionListTerm()
+        if xmlElement.name in GDefinitionListDefinition._elementNames:
+            e = GDefinitionListDefinition()
         if xmlElement.name in GHyperlink._elementNames:
             e = GHyperlink()
             e.url = xmlElement.getAttributeValue("url")
