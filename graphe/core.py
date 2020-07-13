@@ -6,6 +6,10 @@ from morphe.core import *
 
 
 class GContributor(object):
+    """
+    Represents a Graphe contributor.
+    """
+
     def __init__(self):
 
         self.name = ""
@@ -16,6 +20,11 @@ class GContributor(object):
 
 
 class GTextElement(object):
+    """
+    Represents a Graphe text element. Text elements can have style properties, but these 
+    are always inherited from the containing element.
+    """
+    
     def __init__(self, text=""):
 
         self.text = text
