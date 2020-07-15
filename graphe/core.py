@@ -24,7 +24,7 @@ class GTextElement(object):
     Represents a Graphe text element. Text elements can have style properties, but these 
     are always inherited from the containing element.
     """
-    
+
     def __init__(self, text=""):
 
         self.text = text
@@ -39,6 +39,12 @@ class GTextElement(object):
 
 
 class GContentElement(object):
+    """
+    Represents a Graphe content element. Content elements can contain other elements, 
+    whether they are other content elements or text elements. Content elements can also
+    have style rules applied to them, which may then be inherited by subelements.
+    """
+
     _elementNames = []
 
     def __init__(self):
@@ -63,6 +69,10 @@ class GContentElement(object):
 
 
 class GParagraph(GContentElement):
+    """
+    Represents a Graphe paragraph.
+    """
+
     _elementNames = ["paragraph", "p"]
 
     def __init__(self):
@@ -178,7 +188,7 @@ class GOrderedList(GContentElement):
 
 class GListItem(GContentElement):
     _elementNames = ["list-item", "li"]
-    
+
 
 class GDefinitionList(GContentElement):
     _elementNames = ["definition-list", "dl"]
@@ -193,10 +203,10 @@ class GDefinitionList(GContentElement):
             "font-slant": "inherit",
             "text-alignment": "inherit",
         }
-    
+
 
 class GDefinitionListTerm(GContentElement):
-    _elementNames = ["definition-list-term", "dt"]
+    _elementNames = ["definition-list-term", "dlt"]
 
     def __init__(self):
 
@@ -208,10 +218,10 @@ class GDefinitionListTerm(GContentElement):
             "font-slant": "inherit",
             "text-alignment": "inherit",
         }
-    
+
 
 class GDefinitionListDefinition(GContentElement):
-    _elementNames = ["definition-list-definition", "dd"]
+    _elementNames = ["definition-list-definition", "dld"]
 
     def __init__(self):
 
@@ -259,14 +269,15 @@ class GPageTemplate(GTemplate):
         self.header = None
         self.footer = None
 
+
 class GHeader(GContentElement):
     def __init__(self):
         super(GContentElement, self).__init__()
 
+
 class GFooter(GContentElement):
     def __init__(self):
         super(GContentElement, self).__init__()
-
 
 
 class GSection(GContentElement):
@@ -282,7 +293,7 @@ class GSection(GContentElement):
     @property
     def pageTemplate(self):
         if self.document != None:
-            pageTemplates =  [pt for pt in self.document.templates if pt.reference == self.pageTemplateReference]
+            pageTemplates = [pt for pt in self.document.templates if pt.reference == self.pageTemplateReference]
 
             if len(pageTemplates) > 0:
                 return pageTemplates[0]
@@ -299,6 +310,9 @@ class GDocument(object):
         self.subtitle = ""
         self.abstract = ""
         self.keywords = []
+        self.draft = ""
+        self.edition = ""
+        self.isbn = ""
         self.contributors = []
         self.publicationDate = datetime.now()
         self.templates = []
@@ -379,6 +393,18 @@ class GImporter(object):
 
         self.allowedDocumentVersions = ["0.1"]
 
+    def _getAttributeValueOfSynonymousAttributes(self, element, attributeNames):
+
+        value = ""
+
+        for an in attributeNames:
+            av = element.getAttributeValue(an)
+
+            if av != "":
+                value = av
+
+        return value
+
     def importDocument(self, filePath):
         xmlParser = XMLParser()
 
@@ -411,6 +437,9 @@ class GImporter(object):
         subtitle = root.getFirstElementWithName("subtitle")
         abstract = root.getFirstElementWithName("abstract")
         keywords = root.getFirstElementWithName("keywords")
+        draft = root.getFirstElementWithName("draft")
+        edition = root.getFirstElementWithName("edition")
+        isbn = root.getFirstElementWithName("isbn")
 
         if title == None:
             raise GrapheValidationError("A Graphe document must have a title.")
@@ -425,6 +454,15 @@ class GImporter(object):
 
         if keywords != None:
             document.keywords = [k.strip() for k in keywords.innerText.split(",")]
+
+        if draft != None:
+            document.draft = draft.innerText.strip()
+
+        if edition != None:
+            document.edition = edition.innerText.strip()
+
+        if isbn != None:
+            document.isbn = isbn.innerText.strip()
 
         contributors = root.getFirstElementWithName("contributors").getElementsByName("contributor")
 
@@ -466,8 +504,7 @@ class GImporter(object):
         for pageTemplate in pageTemplates:
             pt = GPageTemplate()
 
-            pt.reference = pageTemplate.getAttributeValue("r")
-            pt.reference = pageTemplate.getAttributeValue("reference")
+            pt.reference = self._getAttributeValueOfSynonymousAttributes(pageTemplate, ["r", "reference"])
 
             header = pageTemplate.getFirstElementWithName("header", False)
             footer = pageTemplate.getFirstElementWithName("footer", False)
@@ -500,10 +537,9 @@ class GImporter(object):
             s.id = section.getAttributeValue("id")
             s.style = section.getAttributeValue("style")
             s.styleClass = section.getAttributeValue("style-class")
-            s.language = section.getAttributeValue("l")
-            s.language = section.getAttributeValue("language")
-            s.pageTemplateReference = section.getAttributeValue("ptr")
-            
+            s.language = self._getAttributeValueOfSynonymousAttributes(section, ["l", "language"])
+            s.pageTemplateReference = self._getAttributeValueOfSynonymousAttributes(section, ["ptr", "page-template-reference"])
+
             s.subelements = self._getPageElementsFromXML(section.subelements)
 
             document.sections.append(s)
@@ -696,7 +732,7 @@ class StyleResolver(object):
                 if len(allElements) > 0:
                     allElements = [allElements[0]]
                 continue
-            
+
             if isinstance(selector, MSubelementSelector):
                 allElements = self.selectNthOrderSubelements(allElements)
                 continue
