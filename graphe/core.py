@@ -598,8 +598,7 @@ class GImporter(object):
             e = GTableOfContents()
         if xmlElement.name in GCitation._elementNames:
             e = GCitation()
-            e.reference = xmlElement.getAttributeValue("r")
-            e.reference = xmlElement.getAttributeValue("reference")
+            e.reference = self._getAttributeValueOfSynonymousAttributes(xmlElement, ["r", "reference"])
 
         if e == None:
             raise GrapheValidationError("<{0}> is not a valid element type.".format(xmlElement.name))
@@ -607,8 +606,7 @@ class GImporter(object):
         e.id = xmlElement.getAttributeValue("id")
         e.style = xmlElement.getAttributeValue("style")
         e.styleClass = xmlElement.getAttributeValue("style-class")
-        e.language = xmlElement.getAttributeValue("l")
-        e.language = xmlElement.getAttributeValue("language")
+        e.language = self._getAttributeValueOfSynonymousAttributes(xmlElement, ["l", "language"])
 
         e.subelements = self._getPageElementsFromXML(xmlElement.subelements)
 
