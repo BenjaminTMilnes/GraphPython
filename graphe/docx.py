@@ -34,6 +34,8 @@ class WordExportContext(object):
         self.currentRun = None
 
     def addSection(self, pageWidth, pageHeight, topMargin, rightMargin, bottomMargin, leftMargin):
+        self.logger.debug("Adding section to document.")
+
         if self.n > 0:
             self.currentSection = self.dx.add_section(WD_SECTION.NEW_PAGE)
 
@@ -47,6 +49,8 @@ class WordExportContext(object):
         self.currentSection.left_margin = leftMargin
 
     def addHeading(self, level, textAlignment, marginTop, marginBottom):
+        self.logger.debug("Adding heading to document.")
+
         self.currentParagraph = self.dx.add_paragraph("")
         self.currentParagraph.alignment = alignments.get(textAlignment, WD_ALIGN_PARAGRAPH.LEFT)
         self.currentParagraph.paragraph_format.space_before = marginTop
@@ -61,6 +65,8 @@ class WordExportContext(object):
         self.currentParagraph = self.dx.add_heading("", level)
 
     def addParagraph(self, textAlignment, marginTop, marginBottom, lineHeight, textIndentation):
+        self.logger.debug("Adding paragraph to document.")
+
         self.currentParagraph = self.dx.add_paragraph("")
         self.currentParagraph.alignment = alignments.get(textAlignment, WD_ALIGN_PARAGRAPH.LEFT)
         self.currentParagraph.paragraph_format.space_before = marginTop
@@ -69,6 +75,8 @@ class WordExportContext(object):
         self.currentParagraph.paragraph_format.first_line_indent = textIndentation
 
     def addRun(self, text, fontName, fontHeight, bold=False, italic=False, underline=False, strikethrough=False, fontVariant="none"):
+        self.logger.debug("Adding text \"{}\" to document.".format(text))
+
         self.currentRun = self.currentParagraph.add_run(text)
         self.currentRun.font.name = fontName
         self.currentRun.font.size = fontHeight
@@ -80,6 +88,7 @@ class WordExportContext(object):
         self.currentRun.font.small_caps = True if fontVariant in ["small-capitals", "small-caps"] else False
 
     def addLineBreak(self):
+        self.logger.debug("Adding line break to document.")
         self.currentRun.add_break()
 
     def enterSectionHeader(self):
