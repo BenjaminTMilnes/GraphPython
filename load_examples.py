@@ -2,6 +2,7 @@ from graphe.core import *
 from graphe.docx import *
 from graphe.latex import *
 from graphe.md import *
+from graphe.txt import *
 from morphe.core import *
 import json
 import logging
@@ -26,6 +27,9 @@ resolver.applyMorpheDocumentToGrapheDocument(morpheDocument, document)
 
 markdownExporter = MarkdownExporter()
 markdownExporter.exportDocument(document, "examples/example1.md")
+
+textExporter = TextExporter()
+textExporter.exportDocument(document, "examples/example1.txt")
 
 #exporter = WordExporter()
 
