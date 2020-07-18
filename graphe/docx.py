@@ -123,6 +123,7 @@ class WordExporter(object):
             return Inches(length.number)
 
     def exportDocument(self, document, filePath):
+        self.logger.debug("Exporting Graphe document as Word file to {}".format(filePath))
 
         dx = Document()
         context = WordExportContext(dx)
@@ -133,6 +134,8 @@ class WordExporter(object):
         dx.save(filePath)
 
     def exportSection(self, section, document, context):
+        self.logger.debug("Exporting section.")
+
         pageWidth = self._getLength(section.styleProperties.get("page-width", GLength(12.85, "cm")))
         pageHeight = self._getLength(section.styleProperties.get("page-height", GLength(19.84, "cm")))
         marginTop = self._getLength(section.styleProperties.get("margin-top", GLength(1.5, "cm")))
@@ -142,7 +145,7 @@ class WordExporter(object):
 
         context.addSection(pageWidth, pageHeight, marginTop, marginRight, marginBottom, marginLeft)
 
-        self.logger.info("Page template reference: '{0}'".format(section.pageTemplateReference))
+        self.logger.debug("Page template reference: '{0}'".format(section.pageTemplateReference))
 
         if section.pageTemplate != None and section.pageTemplate.header != None:
             context.enterSectionHeader()
