@@ -192,14 +192,7 @@ class WordExporter(object):
             self.exportPageElements(pageElement.subelements, document, context)
 
         if isinstance(pageElement, GVariable):
-            if pageElement.name == "title":
-                context.addRun(document.title)
-            if pageElement.name == "subtitle":
-                context.addRun(document.subtitle)
-            if pageElement.name == "authorName":
-                context.addRun(document.authorName)
-            if pageElement.name == "currentYear":
-                context.addRun(str(datetime.now().year))
+            context.addRun(document.getValueOfVariable(pageElement.name))
 
         if isinstance(pageElement, GHyperlink):
             self.exportPageElements(pageElement.subelements, document, context)

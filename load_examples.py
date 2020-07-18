@@ -21,8 +21,8 @@ print(len(morpheDocument.styleRules))
 
 resolver.applyMorpheDocumentToGrapheDocument(morpheDocument, document)
 
-exporter = LaTeXExporter()
-exporter.exportDocument(document, "examples/example1.tex")
+#exporter = LaTeXExporter()
+#exporter.exportDocument(document, "examples/example1.tex")
 
 markdownExporter = MarkdownExporter()
 markdownExporter.exportDocument(document, "examples/example1.md")

@@ -241,6 +241,15 @@ class GVariable(GContentElement):
     def __init__(self):
         self.name = ""
 
+        self.styleProperties = {
+            "font-name": "inherit",
+            "font-variant": "inherit",
+            "font-height": "inherit",
+            "font-weight": "inherit",
+            "font-slant": "inherit",
+            "text-alignment": "inherit",
+        }
+
 
 class GTableOfContents(GContentElement):
     _elementNames = ["table-of-contents", "toc"]
@@ -326,6 +335,24 @@ class GDocument(object):
             return a[0].name
         else:
             return ""
+
+    def getValueOfVariable(self, variableName):
+        if variableName == "title":
+            return self.title
+        if variableName == "subtitle":
+            return self.subtitle
+        if variableName == "authorName":
+            return self.authorName
+        if variableName == "currentYear":
+            return str(datetime.now().year)
+        if variableName == "draft":
+            return self.draft
+        if variableName == "edition":
+            return self.edition
+        if variableName == "isbn":
+            return self.isbn
+
+        return ""
 
 
 class GLength(object):
