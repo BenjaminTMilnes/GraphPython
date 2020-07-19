@@ -267,7 +267,7 @@ class LaTeXExporter(object):
 
                 self.exportInlineElements(element, document, p)
 
-                if element.styleProperties.get("text-alignment") == "centred":
+                if element.styleProperties.get("text-alignment") in ["centred", "centered"]:
                     documentEnvironment.subelements.append(LaTeXCommand("centering"))
 
                 documentEnvironment.subelements.append(p)
