@@ -82,3 +82,6 @@ class MarkdownExporter(object):
                 fileObject.write("({} \"{}\")".format(element.url, element.title))
             else:
                 fileObject.write("({})".format(element.url))
+
+        if isinstance(element, GHorizontalRule):
+            fileObject.write("\n---\n")

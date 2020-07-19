@@ -178,6 +178,10 @@ class GPageBreak(GContentElement):
     _elementNames = ["page-break", "pb"]
 
 
+class GHorizontalRule(GContentElement):
+    _elementNames = ["horizontal-rule", "hr"]
+
+
 class GUnorderedList(GContentElement):
     _elementNames = ["unordered-list", "ul"]
 
@@ -583,6 +587,8 @@ class GImporter(object):
             return GPageBreak()
         if xmlElement.name in GLineBreak._elementNames:
             return GLineBreak()
+        if xmlElement.name in GHorizontalRule._elementNames:
+            return GHorizontalRule()
 
         e = None
 
