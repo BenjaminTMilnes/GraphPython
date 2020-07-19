@@ -230,14 +230,14 @@ class LaTeXExporter(object):
 
                 documentEnvironment.subelements.append(newpage)
 
-            self.exportSection(section, documentEnvironment)
+            self.exportSection(section, document, documentEnvironment)
 
             n += 1
 
         latexWriter = LaTeXWriter()
         latexWriter.writeDocument(filePath, latexDocument)
 
-    def exportSection(self, section, documentEnvironment):
+    def exportSection(self, section, document, documentEnvironment):
         if False:
             if len(section.subelements) > 0 and isinstance(section.subelements[0], GHeading):
                 sectionHeading = section.subelements[0]
@@ -259,36 +259,38 @@ class LaTeXExporter(object):
             if isinstance(element, GHeading):
                 h = LaTeXParagraph()
 
-                self.exportInlineElements(element, h)
+                self.exportInlineElements(element, document, h)
 
                 documentEnvironment.subelements.append(h)
             if isinstance(element, GParagraph):
                 p = LaTeXParagraph()
 
-                self.exportInlineElements(element, p)
+                self.exportInlineElements(element, document, p)
 
                 if element.styleProperties.get("text-alignment") == "centred":
                     documentEnvironment.subelements.append(LaTeXCommand("centering"))
 
                 documentEnvironment.subelements.append(p)
 
-    def exportInlineElements(self, gElement, latexElement):
+    def exportInlineElements(self, gElement, gDocument, latexElement):
 
         for subelement in gElement.subelements:
             if isinstance(subelement, GTextElement):
                 t = LaTeXTextElement(subelement.text)
 
                 latexElement.subelements.append(t)
+            if isinstance(subelement, GVariable):
+                t = LaTeXTextElement(gDocument.getValueOfVariable(subelement.name))
+
+                latexElement.subelements.append(t)
             if isinstance(subelement, GItalic):
-                text = subelement.subelements[0].text
                 i = LaTeXItalicCommand()
-                i.setText(text)
+                self.exportInlineElements(subelement, gDocument, i)
 
                 latexElement.subelements.append(i)
             if isinstance(subelement, GBold):
-                text = subelement.subelements[0].text
                 b = LaTeXBoldCommand()
-                b.setText(text)
+                self.exportInlineElements(subelement, gDocument, b)
 
                 latexElement.subelements.append(b)
             if isinstance(subelement, GLineBreak):

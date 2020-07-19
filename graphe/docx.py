@@ -187,19 +187,25 @@ class WordExporter(object):
 
             context.addParagraph(textAlignment, marginTop, marginBottom, lineHeight, textIndentation)
             self.exportPageElements(pageElement.subelements, document, context)
-            
+
         if isinstance(pageElement, GDefinitionList):
             self.exportPageElements(pageElement.subelements, document, context)
 
         if isinstance(pageElement, GVariable):
-            context.addRun(document.getValueOfVariable(pageElement.name))
+            fontName = pageElement.styleProperties.get("font-name", "Times New Roman")
+            fontVariant = pageElement.styleProperties.get("font-variant", "none")
+            fontHeight = self._getLength(pageElement.styleProperties.get("font-height", GLength(12, "pt")))
+            fontSlant = True if pageElement.styleProperties.get("font-slant", "none") == "italic" else False
+            fontWeight = True if pageElement.styleProperties.get("font-weight", "none") == "bold" else False
+
+            context.addRun(document.getValueOfVariable(pageElement.name),  fontName, fontHeight, fontWeight, fontSlant, False, False, fontVariant)
 
         if isinstance(pageElement, GHyperlink):
             self.exportPageElements(pageElement.subelements, document, context)
 
         if isinstance(pageElement, GItalic):
             self.exportPageElements(pageElement.subelements, document, context)
-            
+
         if isinstance(pageElement, GBold):
             self.exportPageElements(pageElement.subelements, document, context)
 
