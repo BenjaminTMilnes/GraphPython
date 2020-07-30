@@ -239,6 +239,54 @@ class GDefinitionListDefinition(GContentElement):
         }
 
 
+
+class GTable(GContentElement):
+    _elementNames = ["table"]
+
+    def __init__(self):
+
+        self.styleProperties = {
+            "font-name": "inherit",
+            "font-variant": "inherit",
+            "font-height": "inherit",
+            "font-weight": "inherit",
+            "font-slant": "inherit",
+            "text-alignment": "inherit",
+        }
+        
+
+
+class GTableRow(GContentElement):
+    _elementNames = ["table-row", "tr"]
+
+    def __init__(self):
+
+        self.styleProperties = {
+            "font-name": "inherit",
+            "font-variant": "inherit",
+            "font-height": "inherit",
+            "font-weight": "inherit",
+            "font-slant": "inherit",
+            "text-alignment": "inherit",
+        }
+        
+
+
+class GTableData(GContentElement):
+    _elementNames = ["table-data", "td"]
+
+    def __init__(self):
+
+        self.styleProperties = {
+            "font-name": "inherit",
+            "font-variant": "inherit",
+            "font-height": "inherit",
+            "font-weight": "inherit",
+            "font-slant": "inherit",
+            "text-alignment": "inherit",
+        }
+
+
 class GVariable(GContentElement):
     _elementNames = ["variable", "v"]
 
@@ -302,6 +350,7 @@ class GSection(GContentElement):
         self.document = None
 
         self.pageTemplateReference = ""
+        self.exclude = False
 
     @property
     def pageTemplate(self):
@@ -570,6 +619,7 @@ class GImporter(object):
             s.styleClass = section.getAttributeValue("style-class")
             s.language = self._getAttributeValueOfSynonymousAttributes(section, ["l", "language"])
             s.pageTemplateReference = self._getAttributeValueOfSynonymousAttributes(section, ["ptr", "page-template-reference"])
+            s.exclude = True if  section.getAttributeValue("exclude") == "yes" else False
 
             s.subelements = self._getPageElementsFromXML(section.subelements)
 
@@ -620,6 +670,12 @@ class GImporter(object):
             e = GDefinitionListTerm()
         if xmlElement.name in GDefinitionListDefinition._elementNames:
             e = GDefinitionListDefinition()
+        if xmlElement.name in GTable._elementNames:
+            e = GTable()
+        if xmlElement.name in GTableRow._elementNames:
+            e = GTableRow()
+        if xmlElement.name in GTableData._elementNames:
+            e = GTableData()
         if xmlElement.name in GHyperlink._elementNames:
             e = GHyperlink()
             e.url = xmlElement.getAttributeValue("url")

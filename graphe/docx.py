@@ -129,7 +129,8 @@ class WordExporter(object):
         context = WordExportContext(dx)
 
         for section in document.sections:
-            self.exportSection(section, document, context)
+            if section.exclude == False:
+                self.exportSection(section, document, context)
 
         dx.save(filePath)
 
