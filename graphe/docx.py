@@ -2,7 +2,7 @@ from graphe.core import *
 from docx import Document
 from docx.shared import Pt, Mm, Cm, Inches, RGBColor
 from docx.enum.section import WD_SECTION
-from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
 from datetime import datetime
 import logging
 
@@ -55,6 +55,7 @@ class WordExportContext(object):
         self.currentParagraph.alignment = alignments.get(textAlignment, WD_ALIGN_PARAGRAPH.LEFT)
         self.currentParagraph.paragraph_format.space_before = marginTop
         self.currentParagraph.paragraph_format.space_after = marginBottom
+        self.currentParagraph.paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
 
         return
 
@@ -64,14 +65,20 @@ class WordExportContext(object):
             level = 1
         self.currentParagraph = self.dx.add_heading("", level)
 
-    def addParagraph(self, textAlignment, marginTop, marginBottom, lineHeight, textIndentation):
+    def addParagraph(self, textAlignment, marginTop, marginBottom, lineHeightRule, lineHeight, textIndentation):
         self.logger.debug("Adding paragraph to document.")
 
         self.currentParagraph = self.dx.add_paragraph("")
         self.currentParagraph.alignment = alignments.get(textAlignment, WD_ALIGN_PARAGRAPH.LEFT)
         self.currentParagraph.paragraph_format.space_before = marginTop
         self.currentParagraph.paragraph_format.space_after = marginBottom
-        self.currentParagraph.paragraph_format.line_spacing = lineHeight
+
+        if lineHeightRule == "exact":
+            self.currentParagraph.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
+            self.currentParagraph.paragraph_format.line_spacing = lineHeight
+        else:
+            self.currentParagraph.paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
+
         self.currentParagraph.paragraph_format.first_line_indent = textIndentation
 
     def addRun(self, text, fontName, fontHeight, bold=False, italic=False, underline=False, strikethrough=False, fontVariant="none"):
@@ -166,9 +173,15 @@ class WordExporter(object):
             marginTop = self._getLength(pageElement.styleProperties.get("margin-top", GLength(0, "pt")))
             marginBottom = self._getLength(pageElement.styleProperties.get("margin-bottom", GLength(0, "pt")))
             textIndentation = self._getLength(pageElement.styleProperties.get("text-indentation", GLength(0, "pt")))
-            lineHeight = self._getLength(pageElement.styleProperties.get("line-height", GLength(12, "pt")))
 
-            context.addParagraph(textAlignment, marginTop, marginBottom, lineHeight, textIndentation)
+            if "line-height" in pageElement.styleProperties:
+                lineHeightRule = "exact"
+                lineHeight = self._getLength(pageElement.styleProperties.get("line-height", GLength(12, "pt")))
+            else:
+                lineHeightRule = "single"
+                lineHeight = None
+
+            context.addParagraph(textAlignment, marginTop, marginBottom, lineHeightRule, lineHeight, textIndentation)
             self.exportPageElements(pageElement.subelements, document, context)
 
         if isinstance(pageElement, GHeading):
@@ -184,9 +197,15 @@ class WordExporter(object):
             marginTop = self._getLength(pageElement.styleProperties.get("margin-top", GLength(0, "pt")))
             marginBottom = self._getLength(pageElement.styleProperties.get("margin-bottom", GLength(0, "pt")))
             textIndentation = self._getLength(pageElement.styleProperties.get("text-indentation", GLength(0, "pt")))
-            lineHeight = self._getLength(pageElement.styleProperties.get("line-height", GLength(12, "pt")))
 
-            context.addParagraph(textAlignment, marginTop, marginBottom, lineHeight, textIndentation)
+            if "line-height" in pageElement.styleProperties:
+                lineHeightRule = "exact"
+                lineHeight = self._getLength(pageElement.styleProperties.get("line-height", GLength(12, "pt")))
+            else:
+                lineHeightRule = "single"
+                lineHeight = None
+
+            context.addParagraph(textAlignment, marginTop, marginBottom, lineHeightRule, lineHeight, textIndentation)
             self.exportPageElements(pageElement.subelements, document, context)
 
         if isinstance(pageElement, GDefinitionList):

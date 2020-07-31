@@ -699,7 +699,7 @@ class GImporter(object):
 
         e.subelements = self._getPageElementsFromXML(xmlElement.subelements)
 
-        if (isinstance(e, GParagraph) or isinstance(e, GHeading) or isinstance(e, GDivision)) and len(e.subelements) > 0:
+        if (isinstance(e, GParagraph) or isinstance(e, GHeading) or isinstance(e, GDivision) or isinstance(e, GListItem) or isinstance(e, GDefinitionListTerm) or isinstance(e, GDefinitionListDefinition)) and len(e.subelements) > 0:
             fse = e.subelements[0]
             lse = e.subelements[-1]
 
@@ -723,7 +723,17 @@ class StyleResolver(object):
         return e
 
     def selectElementsByName(self, elements, name):
-        return [e for e in elements if isinstance(e, GContentElement) and name in e._elementNames]
+        if name in GHeading._elementNames:
+            level = name[-1:]
+
+            if level == "0":
+                level = name[-2:]
+
+            level = int(level)
+            
+            return [e for e in elements if isinstance(e, GContentElement) and name in e._elementNames and level == e.level]
+        else:
+            return [e for e in elements if isinstance(e, GContentElement) and name in e._elementNames]
 
     def selectElementsById(self, elements, i):
         return [e for e in elements if isinstance(e, GContentElement) and e.id == i]
