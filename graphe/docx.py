@@ -2,7 +2,7 @@ from graphe.core import *
 from docx import Document
 from docx.shared import Pt, Mm, Cm, Inches, RGBColor
 from docx.enum.section import WD_SECTION
-from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING, WD_BREAK
 from datetime import datetime
 import logging
 
@@ -97,6 +97,10 @@ class WordExportContext(object):
     def addLineBreak(self):
         self.logger.debug("Adding line break to document.")
         self.currentRun.add_break()
+
+    def addPageBreak(self):
+        self.logger.debug("Adding page break to document.")
+        self.currentRun.add_break(WD_BREAK.PAGE)
 
     def enterSectionHeader(self):
         self.lastParagraph = self.currentParagraph
@@ -240,3 +244,6 @@ class WordExporter(object):
 
         if isinstance(pageElement, GLineBreak):
             context.addLineBreak()
+
+        if isinstance(pageElement, GPageBreak):
+            context.addPageBreak()
