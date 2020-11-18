@@ -116,6 +116,10 @@ class XMLDeclaration(object):
         self._setAttributeValue("standalone", value)
 
 
+class HTML5Declaration(object):
+    pass
+
+
 class XMLElement(object):
     def __init__(self, name):
         self.document = None
@@ -127,6 +131,13 @@ class XMLElement(object):
         self.name = name
         self.attributes = []
         self.subelements = []
+
+        self.isSelfClosing = False
+
+        self.lineBreakBeforeOpeningTag = True
+        self.lineBreakAfterOpeningTag = True
+        self.lineBreakBeforeClosingTag = True
+        self.lineBreakAfterClosingTag = False
 
     def _setDepth(self, depth=0):
         self.depth = depth
@@ -142,6 +153,12 @@ class XMLElement(object):
                 e.root = self.root
 
             e.superelement = self
+
+    def setLineBreaks(self, lb1, lb2, lb3, lb4):
+        self.lineBreakBeforeOpeningTag = lb1
+        self.lineBreakAfterOpeningTag = lb2
+        self.lineBreakBeforeClosingTag = lb3
+        self.lineBreakAfterClosingTag = lb4
 
     @property
     def hasAttributes(self):
@@ -227,6 +244,68 @@ class XMLTextElement(object):
 
     def _setDepth(self, depth=0):
         self.depth = depth
+
+
+class XMLExporter(object):
+    def __init__(self):
+        pass
+
+    def exportDocument(self, document):
+        document.root._setDepth()
+
+        return "{}\n{}".format(self.exportDeclaration(document.declaration), self.exportElement(document.root))
+
+    def exportDeclaration(self, declaration):
+        if isinstance(declaration, XMLDeclaration):
+            return "<?xml {} ?>".format(self.exportAttributes(declaration.attributes))
+        if isinstance(declaration, HTML5Declaration):
+            return "<!DOCTYPE html>"
+
+    def exportElements(self, elements):
+        return "".join([self.exportElement(e) for e in elements])
+
+    def exportElement(self, element):
+        if isinstance(element, XMLTextElement):
+            return self.exportTextElement(element)
+        elif isinstance(element, XMLElement):
+            t1 = self.exportAttributes(element.attributes)
+
+            if element.isSelfClosing and len(element.subelements) == 0:    
+                if t1 == "":
+                    t2 = "<{} />".format(element.name)
+                else:
+                    t2 = "<{} {} />".format(element.name, t1)
+
+                indentation = 4 * element.depth * " "
+                lb1 = "\n" + indentation if element.lineBreakBeforeOpeningTag else ""
+                lb4 = "\n" + indentation if element.lineBreakAfterClosingTag else ""
+                
+                return "{}{}{}".format(lb1, t2, lb4)
+            else:
+                if t1 == "":
+                    t2 = "<{}>".format(element.name)
+                else:
+                    t2 = "<{} {}>".format(element.name, t1)
+
+                t3 = self.exportElements(element.subelements)
+                t4 = "</{}>".format(element.name)
+
+                indentation = 4 * element.depth * " "
+                lb1 = "\n" + indentation if element.lineBreakBeforeOpeningTag else ""
+                lb2 = "\n" + indentation if element.lineBreakAfterOpeningTag else ""
+                lb3 = "\n" + indentation if element.lineBreakBeforeClosingTag else ""
+                lb4 = "\n" + indentation if element.lineBreakAfterClosingTag else ""
+
+                return "{}{}{}{}{}{}{}".format(lb1, t2, lb2, t3, lb3, t4, lb4)
+
+    def exportAttributes(self, attributes):
+        return " ".join([self.exportAttribute(a) for a in attributes if a.value != ""])
+
+    def exportAttribute(self, attribute):
+        return "{}=\"{}\"".format(attribute.name, attribute.value)
+
+    def exportTextElement(self, textElement):
+        return textElement.text
 
 
 class Marker(object):
