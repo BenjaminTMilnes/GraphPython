@@ -71,26 +71,92 @@ class HTMLExporter(object):
             e = XMLElement("p")
             self.exportElements(element.subelements, document, e, htmlDocument)
             htmlElement.subelements.append(e)
+
         if isinstance(element, GDivision):
             e = XMLElement("span")
             e.setLineBreaks(False, False, False, False)
             self.exportElements(element.subelements, document, e, htmlDocument)
             htmlElement.subelements.append(e)
+
         if isinstance(element, GHeading):
             l = element.level if element.level <= 6 else 6
             e = XMLElement("h{}".format(l))
             self.exportElements(element.subelements, document, e, htmlDocument)
             htmlElement.subelements.append(e)
+
         if isinstance(element, GItalic):
-            e = XMLElement("i")
+            e = XMLElement("em")
             e.setLineBreaks(False, False, False, False)
             self.exportElements(element.subelements, document, e, htmlDocument)
             htmlElement.subelements.append(e)
+
         if isinstance(element, GBold):
             e = XMLElement("b")
             e.setLineBreaks(False, False, False, False)
             self.exportElements(element.subelements, document, e, htmlDocument)
             htmlElement.subelements.append(e)
+
+        if isinstance(element, GUnderline):
+            e = XMLElement("span")
+            e.setAttributeValue("style", "text-decoration: underline;")
+            e.setLineBreaks(False, False, False, False)
+            self.exportElements(element.subelements, document, e, htmlDocument)
+            htmlElement.subelements.append(e)
+
+        if isinstance(element, GStrikethrough):
+            e = XMLElement("s")
+            e.setLineBreaks(False, False, False, False)
+            self.exportElements(element.subelements, document, e, htmlDocument)
+            htmlElement.subelements.append(e)
+
+        if isinstance(element, GHyperlink):
+            e = XMLElement("a")
+            e.setAttributeValue("href", element.url)
+            e.setAttributeValue("title", element.title)
+            e.setLineBreaks(False, False, False, False)
+            self.exportElements(element.subelements, document, e, htmlDocument)
+            htmlElement.subelements.append(e)
+
+        if isinstance(element, GLineBreak):
+            e = XMLElement("br")
+            e.isSelfClosing = True
+            htmlElement.subelements.append(e)
+
+        if isinstance(element, GHorizontalRule):
+            e = XMLElement("hr")
+            e.isSelfClosing = True
+            htmlElement.subelements.append(e)
+
+        if isinstance(element, GUnorderedList):
+            e = XMLElement("ul")
+            self.exportElements(element.subelements, document, e, htmlDocument)
+            htmlElement.subelements.append(e)
+
+        if isinstance(element, GOrderedList):
+            e = XMLElement("ol")
+            self.exportElements(element.subelements, document, e, htmlDocument)
+            htmlElement.subelements.append(e)
+
+        if isinstance(element, GListItem):
+            e = XMLElement("li")
+            self.exportElements(element.subelements, document, e, htmlDocument)
+            htmlElement.subelements.append(e)
+
+        if isinstance(element, GDefinitionList):
+            e = XMLElement("dl")
+            self.exportElements(element.subelements, document, e, htmlDocument)
+            htmlElement.subelements.append(e)
+
+        if isinstance(element, GDefinitionListTerm):
+            e = XMLElement("dt")
+            self.exportElements(element.subelements, document, e, htmlDocument)
+            htmlElement.subelements.append(e)
+
+        if isinstance(element, GDefinitionListDefinition):
+            e = XMLElement("dd")
+            self.exportElements(element.subelements, document, e, htmlDocument)
+            htmlElement.subelements.append(e)
+
         if isinstance(element, GTextElement):
             t = XMLTextElement(element.text)
             htmlElement.subelements.append(t)
