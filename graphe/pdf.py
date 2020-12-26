@@ -316,6 +316,48 @@ class PDFPageObject(PDFIndirectObject):
             "Resources":   self.resources,
         }
 
+class PDFFontObject(PDFIndirectObject):
+    def __init__(self):
+        super().__init__()
+
+        self.subtype = ""
+
+    def setIds(self):
+        self.id = self.document.getNewId()
+
+    def getDictionary(self):
+        return {
+            "Type": PDFName("Font"),
+            "Subtype": PDFName(self.subtype)
+        }
+
+class PDFType1FontObject(PDFFontObject):
+    def __init__(self):
+        super().__init__()
+
+        self.subtype = "Type1"
+        self.baseFont = "Times-Roman"
+        self.firstCharacterCode = 0
+        self.lastCharacterCode = 0
+        self.widths = None
+        self.fontDescriptor = None 
+        self.encoding = None
+
+    def setIds(self):
+        self.id = self.document.getNewId()
+
+    def getDictionary(self):
+        return {
+            "Type": PDFName("Font"),
+            "Subtype": PDFName(self.subtype),
+            "BaseFont": PDFName(self.baseFont),
+            "FirstChar": PDFNumber(self.firstCharacterCode),
+            "LastChar": PDFNumber(self.lastCharacterCode),
+            "Widths": self.widths.getObjectReference(),
+            "FontDescriptor": self.fontDescriptor.getObjectReference(),
+            "Encoding": self.encoding.getObjectReference()
+        }
+
 
 class PDFWriter(object):
     def __init__(self):

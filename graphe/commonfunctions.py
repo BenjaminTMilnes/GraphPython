@@ -5,6 +5,7 @@ from graphe.latex import *
 from graphe.md import *
 from graphe.txt import *
 from graphe.html import *
+from graphe.pdf import *
 import logging
 
 def compileGrapheDocument(grapheFilePath, morpheFilePath, outputFilePath, outputFormat = "docx"):
@@ -40,4 +41,3 @@ def compileGrapheDocument(grapheFilePath, morpheFilePath, outputFilePath, output
         exporter = HTMLExporter()
         logging.info("Exporting document as a HTML (.html) file to {}.".format(outputFilePath))
         exporter.exportDocument(grapheDocument, outputFilePath)
-
