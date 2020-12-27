@@ -358,6 +358,48 @@ class PDFType1FontObject(PDFFontObject):
             "Encoding": self.encoding.getObjectReference()
         }
 
+class PDFFontDescriptor(PDFIndirectObject):
+    def __init__(self):
+        super().__init__()
+
+        self.fontName = ""
+        self.fontStretch = ""
+        self.fontWeight = 0
+        self.italicAngle = 0
+        self.ascent = 0
+        self.descent = 0
+        self.leading = 0
+        self.capitalHeight = 0
+        self.xHeight = 0
+        self.verticalStemThickness = 0
+        self.horizontalStemThickness = 0
+        self.averageWidth = 0
+        self.maximumWidth = 0
+        self.missingWidth = 0
+
+
+    def setIds(self):
+        self.id = self.document.getNewId()
+
+    def getDictionary(self):
+        return {
+            "Type": PDFName("FontDescriptor"),
+            "FontName": PDFName(self.fontName),
+            "FontStretch": PDFName(self.fontStretch),
+            "FontWeight": PDFNumber(self.fontWeight),
+            "ItalicAngle": PDFNumber(self.italicAngle),
+            "Ascent": PDFNumber(self.ascent),
+            "Descent": PDFNumber(self.descent),
+            "Leading": PDFNumber(self.leading),
+            "CapHeight": PDFNumber(self.capitalHeight),
+            "XHeight": PDFNumber(self.xHeight),
+            "StemV": PDFNumber(self.verticalStemThickness),
+            "StemH": PDFNumber(self.horizontalStemThickness),
+            "AvgWidth": PDFNumber(self.averageWidth),
+            "MaxWidth": PDFNumber(self.maximumWidth),
+            "MissingWidth": PDFNumber(self.missingWidth)
+        }
+
 
 class PDFWriter(object):
     def __init__(self):
