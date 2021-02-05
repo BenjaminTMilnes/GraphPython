@@ -3,6 +3,7 @@ from docx import Document
 from docx.shared import Pt, Mm, Cm, Inches, RGBColor
 from docx.enum.section import WD_SECTION
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING, WD_BREAK
+from docx.oxml import OxmlElement, ns
 from datetime import datetime
 import logging
 
@@ -47,6 +48,8 @@ class WordExportContext(object):
         self.currentSection.right_margin = rightMargin
         self.currentSection.bottom_margin = bottomMargin
         self.currentSection.left_margin = leftMargin
+        self.currentSection.header.is_linked_to_previous = False
+        self.currentSection.footer.is_linked_to_previous = False
 
     def addHeading(self, level, textAlignment, marginTop, marginBottom):
         self.logger.debug("Adding heading to document.")
@@ -102,14 +105,42 @@ class WordExportContext(object):
         self.logger.debug("Adding page break to document.")
         self.currentRun.add_break(WD_BREAK.PAGE)
 
+    def addPageNumber(self):
+        self.logger.debug("Adding page number to document")
+        e1 = OxmlElement("w:fldChar")
+        e1.set(ns.qn("w:fldCharType"), "begin")
+
+        e2 = OxmlElement("w:instrText")
+        e2.set(ns.qn("xml:space"), "preserve")
+        e2.text = "PAGE"
+        
+        e3 = OxmlElement("w:fldChar")
+        e3.set(ns.qn("w:fldCharType"), "end")
+
+        self.currentRun._r.append(e1)
+        self.currentRun._r.append(e2)
+        self.currentRun._r.append(e3)
+
     def enterSectionHeader(self):
+        self.logger.debug("Entering section header")
         self.lastParagraph = self.currentParagraph
 
         header = self.currentSection.header
         self.currentParagraph = header.paragraphs[0]
-        self.currentParagraph.text = "lkj"
 
     def exitSectionHeader(self):
+        self.logger.debug("Exiting section header")
+        self.currentParagraph = self.lastParagraph
+
+    def enterSectionFooter(self):
+        self.logger.debug("Entering section footer")
+        self.lastParagraph = self.currentParagraph
+
+        footer = self.currentSection.footer
+        self.currentParagraph = footer.paragraphs[0]
+
+    def exitSectionFooter(self):
+        self.logger.debug("Exiting section footer")
         self.currentParagraph = self.lastParagraph
 
 
@@ -119,6 +150,9 @@ class WordExporter(object):
 
     def _getLength(self, length):
         self.logger.debug(length)
+
+        if length == "inherit":
+            return Pt(12)
 
         if length.unit == "mm":
             return Mm(length.number)
@@ -158,11 +192,21 @@ class WordExporter(object):
         context.addSection(pageWidth, pageHeight, marginTop, marginRight, marginBottom, marginLeft)
 
         self.logger.debug("Page template reference: '{0}'".format(section.pageTemplateReference))
+        self.logger.debug(len(document.templates))
 
         if section.pageTemplate != None and section.pageTemplate.header != None:
+            self.logger.debug("Exporting section header")
             context.enterSectionHeader()
+            context.addRun("", "Times New Roman", self._getLength(GLength(10, "pt")))
             self.exportPageElements(section.pageTemplate.header.subelements, document, context)
             context.exitSectionHeader()
+            
+        if section.pageTemplate != None and section.pageTemplate.footer != None:
+            self.logger.debug("Exporting section footer")
+            context.enterSectionFooter()
+            context.addRun("", "Times New Roman", self._getLength(GLength(10, "pt")))
+            self.exportPageElements(section.pageTemplate.footer.subelements, document, context)
+            context.exitSectionFooter()
 
         self.exportPageElements(section.subelements, document, context)
 
@@ -223,6 +267,16 @@ class WordExporter(object):
             fontWeight = True if pageElement.styleProperties.get("font-weight", "none") == "bold" else False
 
             context.addRun(document.getValueOfVariable(pageElement.name),  fontName, fontHeight, fontWeight, fontSlant, False, False, fontVariant)
+
+        if isinstance(pageElement, GPageNumber):
+            fontName = pageElement.styleProperties.get("font-name", "Times New Roman")
+            fontVariant = pageElement.styleProperties.get("font-variant", "none")
+            fontHeight = self._getLength(pageElement.styleProperties.get("font-height", GLength(12, "pt")))
+            fontSlant = True if pageElement.styleProperties.get("font-slant", "none") == "italic" else False
+            fontWeight = True if pageElement.styleProperties.get("font-weight", "none") == "bold" else False
+
+            context.addRun("",  fontName, fontHeight, fontWeight, fontSlant, False, False, fontVariant)
+            context.addPageNumber()
 
         if isinstance(pageElement, GHyperlink):
             self.exportPageElements(pageElement.subelements, document, context)

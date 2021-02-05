@@ -303,6 +303,21 @@ class GVariable(GContentElement):
         }
 
 
+class GPageNumber(GContentElement):
+    _elementNames = ["page-number", "pn"]
+
+    def __init__(self):
+
+        self.styleProperties = {
+            "font-name": "inherit",
+            "font-variant": "inherit",
+            "font-height": "inherit",
+            "font-weight": "inherit",
+            "font-slant": "inherit",
+            "text-alignment": "inherit",
+        }
+
+
 class GTableOfContents(GContentElement):
     _elementNames = ["table-of-contents", "toc"]
 
@@ -579,7 +594,7 @@ class GImporter(object):
     def _importTemplates(self, root, document):
 
         templates = root.getFirstElementWithName("templates", False)
-        pageTemplates = root.getElementsByName("page-template", False)
+        pageTemplates = templates.getElementsByName("page-template", False)
 
         for pageTemplate in pageTemplates:
             pt = GPageTemplate()
@@ -592,14 +607,14 @@ class GImporter(object):
             if header != None:
                 h = GHeader()
 
-                h.subelements = self._getPageElementsFromXML(pageTemplate.subelements)
+                h.subelements = self._getPageElementsFromXML(header.subelements)
 
                 pt.header = h
 
             if footer != None:
                 f = GFooter()
 
-                f.subelements = self._getPageElementsFromXML(pageTemplate.subelements)
+                f.subelements = self._getPageElementsFromXML(footer.subelements)
 
                 pt.footer = f
 
@@ -683,6 +698,8 @@ class GImporter(object):
         if xmlElement.name in GVariable._elementNames:
             e = GVariable()
             e.name = xmlElement.getAttributeValue("name")
+        if xmlElement.name in GPageNumber._elementNames:
+            e = GPageNumber()
         if xmlElement.name in GTableOfContents._elementNames:
             e = GTableOfContents()
         if xmlElement.name in GCitation._elementNames:
