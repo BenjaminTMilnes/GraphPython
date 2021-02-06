@@ -34,6 +34,8 @@ class WordExportContext(object):
         self.lastParagraph = None
         self.currentRun = None
 
+        self.focus = "main"
+
     def addSection(self, pageWidth, pageHeight, topMargin, rightMargin, bottomMargin, leftMargin):
         self.logger.debug("Adding section to document.")
 
@@ -51,10 +53,18 @@ class WordExportContext(object):
         self.currentSection.header.is_linked_to_previous = False
         self.currentSection.footer.is_linked_to_previous = False
 
+    def _addParagraph(self):
+        if self.focus == "main":
+            return self.dx.add_paragraph("")
+        elif self.focus == "header":
+            return self.currentSection.header.add_paragraph(" ")
+        elif self.focus == "footer":
+            return self.currentSection.footer.add_paragraph(" ")
+
     def addHeading(self, level, textAlignment, marginTop, marginBottom):
         self.logger.debug("Adding heading to document.")
 
-        self.currentParagraph = self.dx.add_paragraph("")
+        self.currentParagraph = self._addParagraph()
         self.currentParagraph.alignment = alignments.get(textAlignment, WD_ALIGN_PARAGRAPH.LEFT)
         self.currentParagraph.paragraph_format.space_before = marginTop
         self.currentParagraph.paragraph_format.space_after = marginBottom
@@ -71,7 +81,7 @@ class WordExportContext(object):
     def addParagraph(self, textAlignment, marginTop, marginBottom, lineHeightRule, lineHeight, textIndentation):
         self.logger.debug("Adding paragraph to document.")
 
-        self.currentParagraph = self.dx.add_paragraph("")
+        self.currentParagraph = self._addParagraph()
         self.currentParagraph.alignment = alignments.get(textAlignment, WD_ALIGN_PARAGRAPH.LEFT)
         self.currentParagraph.paragraph_format.space_before = marginTop
         self.currentParagraph.paragraph_format.space_after = marginBottom
@@ -127,10 +137,12 @@ class WordExportContext(object):
 
         header = self.currentSection.header
         self.currentParagraph = header.paragraphs[0]
+        self.focus = "header"
 
     def exitSectionHeader(self):
         self.logger.debug("Exiting section header")
         self.currentParagraph = self.lastParagraph
+        self.focus = "main"
 
     def enterSectionFooter(self):
         self.logger.debug("Entering section footer")
@@ -138,10 +150,12 @@ class WordExportContext(object):
 
         footer = self.currentSection.footer
         self.currentParagraph = footer.paragraphs[0]
+        self.focus = "footer"
 
     def exitSectionFooter(self):
         self.logger.debug("Exiting section footer")
         self.currentParagraph = self.lastParagraph
+        self.focus = "main"
 
 
 class WordExporter(object):

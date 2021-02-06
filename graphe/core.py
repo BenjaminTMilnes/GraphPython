@@ -326,7 +326,7 @@ class GCitation(GContentElement):
     _elementNames = ["citation", "c"]
 
     def __init__(self):
-        super(GCitation, self).__init__()
+        super(GCitation, self).__init__() 
 
         self.reference = ""
 
@@ -827,8 +827,9 @@ class StyleResolver(object):
     def applyStyleRuleToDocument(self, styleRule, document):
 
         sections = document.sections
+        templates = document.templates
 
-        allElements = self.linearise(sections)
+        allElements = self.linearise(sections) + self.linearise(templates)
 
         while len(styleRule.selectors) > 0:
             selector = styleRule.selectors.pop(0)

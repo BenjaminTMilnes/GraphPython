@@ -7,6 +7,12 @@ section {
     font-weight: normal;
 }
 
+header, footer {
+    font-name: EB Garamond;
+    font-height: 10pt;
+    font-weight: normal;
+}
+
 .halftitlepage { 
     text-alignment: centred;
 }
@@ -39,4 +45,8 @@ p {
     margin: 7pt 0pt;
     text-indentation: 20pt;
     line-height: 14pt;
+}
+
+header d, footer d{
+    text-alignment: centred;
 }
