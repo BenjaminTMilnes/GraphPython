@@ -1,13 +1,13 @@
 from datetime import datetime
 import xml.etree.ElementTree as et
 import re
-from graphe.xml import *
-from morphe.core import *
+from graph.xml import *
+from morph.core import *
 
 
 class GContributor(object):
     """
-    Represents a Graphe contributor.
+    Represents a Graph contributor.
     """
 
     def __init__(self):
@@ -21,7 +21,7 @@ class GContributor(object):
 
 class GTextElement(object):
     """
-    Represents a Graphe text element. Text elements can have style properties, but these 
+    Represents a Graph text element. Text elements can have style properties, but these 
     are always inherited from the containing element.
     """
 
@@ -40,7 +40,7 @@ class GTextElement(object):
 
 class GContentElement(object):
     """
-    Represents a Graphe content element. Content elements can contain other elements, 
+    Represents a Graph content element. Content elements can contain other elements, 
     whether they are other content elements or text elements. Content elements can also
     have style rules applied to them, which may then be inherited by subelements.
     """
@@ -70,7 +70,7 @@ class GContentElement(object):
 
 class GParagraph(GContentElement):
     """
-    Represents a Graphe paragraph.
+    Represents a Graph paragraph.
     """
 
     _elementNames = ["paragraph", "p"]
@@ -106,7 +106,7 @@ class GHeading(GContentElement):
         }
 
 
-class GDivision (GContentElement):
+class GDivision(GContentElement):
     _elementNames = ["division", "d"]
 
     def __init__(self):
@@ -478,9 +478,9 @@ def makeGLength(mlength):
     return GLength(float(mlength.number.value), mlength.unit.value)
 
 
-class GrapheValidationError (Exception):
+class GraphValidationError(Exception):
     def __init__(self, message):
-        super(GrapheValidationError, self).__init__(message)
+        super(GraphValidationError, self).__init__(message)
 
 
 class GImporter(object):
@@ -516,15 +516,15 @@ class GImporter(object):
     def _importMetadata(self, root, document):
 
         if root.name != "document":
-            raise GrapheValidationError("The root element in a Graphe document file must be a <document> element.")
+            raise GraphValidationError("The root element in a Graph document file must be a <document> element.")
 
         if not root.hasAttribute("version"):
-            raise GrapheValidationError("The <document> element must have a 'version' attribute.")
+            raise GraphValidationError("The <document> element must have a 'version' attribute.")
 
         version = root.getAttributeValue("version")
 
         if version not in self.allowedDocumentVersions:
-            raise GrapheValidationError("'{0}' is not a valid Graphe version.".format(version))
+            raise GraphValidationError("'{0}' is not a valid Graph version.".format(version))
 
         document.version = version
 
@@ -537,7 +537,7 @@ class GImporter(object):
         isbn = root.getFirstElementWithName("isbn")
 
         if title == None:
-            raise GrapheValidationError("A Graphe document must have a title.")
+            raise GraphValidationError("A Graph document must have a title.")
 
         document.title = title.innerText.strip()
 
@@ -570,7 +570,7 @@ class GImporter(object):
                 if t.lower() in ["author", "editor"]:
                     c.type = t.lower()
                 else:
-                    raise GrapheValidationError("'{0}' is not a valid Graphe contributor type.".format(t))
+                    raise GraphValidationError("'{0}' is not a valid Graph contributor type.".format(t))
 
             name = contributor.getFirstElementWithName("name")
             emailAddress = contributor.getFirstElementWithName("email-address")
@@ -707,7 +707,7 @@ class GImporter(object):
             e.reference = self._getAttributeValueOfSynonymousAttributes(xmlElement, ["r", "reference"])
 
         if e == None:
-            raise GrapheValidationError("<{0}> is not a valid element type.".format(xmlElement.name))
+            raise GraphValidationError("<{0}> is not a valid element type.".format(xmlElement.name))
 
         e.id = xmlElement.getAttributeValue("id")
         e.style = xmlElement.getAttributeValue("style")
@@ -856,20 +856,20 @@ class StyleResolver(object):
             for p in styleRule.properties:
                 self.applyStylePropertyToElement(p, 1, e)
 
-    def applyMorpheDocumentToGrapheDocument(self, morpheDocument, grapheDocument):
-        for styleRule in morpheDocument.styleRules:
-            self.applyStyleRuleToDocument(styleRule, grapheDocument)
+    def applyMorphDocumentToGraphDocument(self, morphDocument, graphDocument):
+        for styleRule in morphDocument.styleRules:
+            self.applyStyleRuleToDocument(styleRule, graphDocument)
 
-        allElements = self.linearise(grapheDocument.sections)
+        allElements = self.linearise(graphDocument.sections)
 
         for element in allElements:
             if isinstance(element, GContentElement):
-                styleProperties = importMorpheProperties(element.style)
+                styleProperties = importMorphProperties(element.style)
 
                 for styleProperty in styleProperties:
                     self.applyStylePropertyToElement(styleProperty, 1, element)
 
-        for section in grapheDocument.sections:
+        for section in graphDocument.sections:
             self.cascadeToSubelements(section)
 
     def cascadeToSubelements(self, element):

@@ -1,4 +1,4 @@
-from graphe.core import *
+from graph.core import *
 
 
 class MarkdownExporter(object):

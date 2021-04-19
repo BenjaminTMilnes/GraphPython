@@ -1,7 +1,7 @@
 import unittest
 from parameterized import parameterized
 
-from graphe.xml import *
+from graph.xml import *
 
 
 class TestXML(unittest.TestCase):

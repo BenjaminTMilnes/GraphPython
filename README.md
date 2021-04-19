@@ -1,22 +1,22 @@
-# GraphePython
+# GraphPython
 
-Graphe, from *Graphe*, a Greek word meaning 'writing', 'the art of writing'.
+Graph, from *Graphe*, a Greek word meaning 'writing', 'the art of writing'.
 
 ---
 
-Graphe is a mark-up language used for describing the content of printable documents. Graphe is an XML-based language with a lot of similarities to HTML - many of the XML elements have the same name - but with many extra features which are very useful for printed documents.
+Graph is a mark-up language used for describing the content of printable documents. Graph is an XML-based language with a lot of similarities to HTML - many of the XML elements have the same name - but with many extra features which are very useful for printed documents.
 
-This repository contains a Python implementation of Graphe.
+This repository contains a Python implementation of Graph.
 
-## An example Graphe document
+## An example Graph document
 
 ```xml
 
 <?xml version="1.0" encoding="utf-8"?>
 <document>
     <title>Example Document</title>
-    <subtitle>written in Graphe</subtitle>
-    <keywords>graphe, example, document</keywords>
+    <subtitle>written in Graph</subtitle>
+    <keywords>graph, example, document</keywords>
     <contributors>
         <contributor type="author">
             <name>B. T. Milnes</name>

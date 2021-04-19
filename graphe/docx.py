@@ -1,4 +1,4 @@
-from graphe.core import *
+from graph.core import *
 from docx import Document
 from docx.shared import Pt, Mm, Cm, Inches, RGBColor
 from docx.enum.section import WD_SECTION
@@ -182,7 +182,7 @@ class WordExporter(object):
             return Inches(length.number)
 
     def exportDocument(self, document, filePath):
-        self.logger.debug("Exporting Graphe document as Word file to {}".format(filePath))
+        self.logger.debug("Exporting Graph document as Word file to {}".format(filePath))
 
         dx = Document()
         context = WordExportContext(dx)
