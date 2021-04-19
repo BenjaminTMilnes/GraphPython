@@ -1,5 +1,5 @@
-from graphe.core import *
-from graphe.xml import *
+from graph.core import *
+from graph.xml import *
 
 
 class HTMLExporter(object):
