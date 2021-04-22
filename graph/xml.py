@@ -30,6 +30,30 @@ class XMLDocument(object):
         # properties.
         self.root._setDepth()
 
+    @staticmethod 
+    def fromString(s):
+        parser = XMLParser()
+
+        document = parser.parseDocument(s)
+
+        return document 
+
+    @staticmethod 
+    def load(filePath):
+        parser = XMLParser()
+
+        document = parser.parseFromFile(filePath)
+
+        return document 
+
+    def save(self, filePath):
+        exporter = XMLExporter()
+
+        s = exporter.exportDocument(self)
+
+        with open(filePath, "w", encoding="utf-8") as fo:
+            fo.write(s)
+
 
 class XMLAttribute(object):
     """
