@@ -528,13 +528,13 @@ class GImporter(object):
 
         document.version = version
 
-        title = root.getFirstElementWithName("title")
-        subtitle = root.getFirstElementWithName("subtitle")
-        abstract = root.getFirstElementWithName("abstract")
-        keywords = root.getFirstElementWithName("keywords")
-        draft = root.getFirstElementWithName("draft")
-        edition = root.getFirstElementWithName("edition")
-        isbn = root.getFirstElementWithName("isbn")
+        title = root.getFirstSubelementWithName("title")
+        subtitle = root.getFirstSubelementWithName("subtitle")
+        abstract = root.getFirstSubelementWithName("abstract")
+        keywords = root.getFirstSubelementWithName("keywords")
+        draft = root.getFirstSubelementWithName("draft")
+        edition = root.getFirstSubelementWithName("edition")
+        isbn = root.getFirstSubelementWithName("isbn")
 
         if title == None:
             raise GraphValidationError("A Graph document must have a title.")
@@ -559,7 +559,7 @@ class GImporter(object):
         if isbn != None:
             document.isbn = isbn.innerText.strip()
 
-        contributors = root.getFirstElementWithName("contributors").getElementsByName("contributor")
+        contributors = root.getFirstSubelementWithName("contributors").getSubelementsByName("contributor")
 
         for contributor in contributors:
             c = GContributor()
@@ -572,10 +572,10 @@ class GImporter(object):
                 else:
                     raise GraphValidationError("'{0}' is not a valid Graph contributor type.".format(t))
 
-            name = contributor.getFirstElementWithName("name")
-            emailAddress = contributor.getFirstElementWithName("email-address")
-            address = contributor.getFirstElementWithName("address")
-            website = contributor.getFirstElementWithName("website")
+            name = contributor.getFirstSubelementWithName("name")
+            emailAddress = contributor.getFirstSubelementWithName("email-address")
+            address = contributor.getFirstSubelementWithName("address")
+            website = contributor.getFirstSubelementWithName("website")
 
             if name != None:
                 c.name = name.innerText.strip()
@@ -593,16 +593,16 @@ class GImporter(object):
 
     def _importTemplates(self, root, document):
 
-        templates = root.getFirstElementWithName("templates", False)
-        pageTemplates = templates.getElementsByName("page-template", False)
+        templates = root.getFirstSubelementWithName("templates", False)
+        pageTemplates = templates.getSubelementsByName("page-template", False)
 
         for pageTemplate in pageTemplates:
             pt = GPageTemplate()
 
             pt.reference = self._getAttributeValueOfSynonymousAttributes(pageTemplate, ["r", "reference"])
 
-            header = pageTemplate.getFirstElementWithName("header", False)
-            footer = pageTemplate.getFirstElementWithName("footer", False)
+            header = pageTemplate.getFirstSubelementWithName("header", False)
+            footer = pageTemplate.getFirstSubelementWithName("footer", False)
 
             if header != None:
                 h = GHeader()
@@ -622,7 +622,7 @@ class GImporter(object):
 
     def _importSections(self, root, document):
 
-        sections = root.getFirstElementWithName("sections", False).getElementsByName("section", False)
+        sections = root.getFirstSubelementWithName("sections", False).getSubelementsByName("section", False)
 
         for section in sections:
             s = GSection()

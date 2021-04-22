@@ -225,18 +225,18 @@ class XMLElement(object):
         else:
             return None
 
-    def getElementsByName(self, name, anyDepth=True):
+    def getSubelementsByName(self, name, anyDepth=True):
         e = [element for element in self.subelements if isinstance(element, XMLElement) and element.name == name]
 
         if anyDepth:
             for element in self.subelements:
                 if isinstance(element, XMLElement):
-                    e += element.getElementsByName(name, anyDepth)
+                    e += element.getSubelementsByName(name, anyDepth)
 
         return e
 
-    def getFirstElementWithName(self, name, anyDepth=True):
-        e = self.getElementsByName(name, anyDepth)
+    def getFirstSubelementWithName(self, name, anyDepth=True):
+        e = self.getSubelementsByName(name, anyDepth)
 
         if len(e) > 0:
             return e[0]
