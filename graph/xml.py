@@ -267,7 +267,29 @@ class XMLTextElement(object):
         self.text = text
 
     def _setDepth(self, depth=0):
-        self.depth = depth
+        self.depth = depth 
+
+
+class XMLComment(object):
+    """
+    Represents an XML comment.
+
+    Attributes
+    ----------
+    text : str
+        The text of this comment.
+    """
+    def __init__(self, text = ""):
+        self.document = None
+        self.root = None
+        self.superelement = None
+
+        self.depth = 0
+
+        self.text = text
+
+    def _setDepth(self, depth=0):
+        self.depth = depth 
 
 
 class XMLExporter(object):
@@ -291,6 +313,8 @@ class XMLExporter(object):
     def exportElement(self, element):
         if isinstance(element, XMLTextElement):
             return self.exportTextElement(element)
+        elif isinstance(element, XMLComment):
+            return self.exportComment(element)
         elif isinstance(element, XMLElement):
             t1 = self.exportAttributes(element.attributes)
 
@@ -330,6 +354,12 @@ class XMLExporter(object):
 
     def exportTextElement(self, textElement):
         return textElement.text
+
+    def exportComment(self, comment):
+        if comment.text.find("--") < 0:
+            raise ValueError("XML comments cannot have '--' in them.")
+
+        return "<!-- {} -->".format(comment.text)
 
 
 class Marker(object):
@@ -427,6 +457,30 @@ class XMLParser(object):
 
         return XMLTextElement(t)
 
+    def _getComment(self, inputText, marker):
+        m = marker.copy()
+
+        if self._expect("<!--", inputText, m) == False:
+            return None 
+
+        commentStart = m.p
+
+        while m.p < len(inputText) - 2:
+            if cut(inputText, m.p, 3) == "-->":
+                break 
+
+            m.p += 1
+
+        commentEnd = m.p 
+
+        c = XMLComment()
+        c.text = inputText[commentStart, commentEnd].strip()
+
+        m.p += 3
+        marker.p = m.p 
+
+        return c 
+
     def _getDeclaration(self, inputText, marker):
         m = marker.copy()
 
@@ -497,6 +551,12 @@ class XMLParser(object):
                 if textElement != None:
                     subelements.append(textElement)
                     continue
+
+                comment = self._getComment(inputText, m)
+
+                if comment != None:
+                    subelements.append(comment)
+                    continue 
 
                 element = self._getElement(inputText, m)
 
