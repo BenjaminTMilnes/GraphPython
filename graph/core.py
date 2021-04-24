@@ -67,6 +67,17 @@ class GContentElement(object):
 
         return cn
 
+    def getInnerText(self):
+        text = ""
+
+        for subelement in self.subelements:
+            if isinstance(subelement, GTextElement):
+                text += subelement.text 
+            else:
+                text += subelement.getInnerText()
+
+        return text 
+
 
 class GParagraph(GContentElement):
     """
