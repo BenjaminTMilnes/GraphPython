@@ -32,6 +32,10 @@ class SuperelementSelector(XPathSelector):
     def __init__(self):
         super(SuperelementSelector, self).__init__()
 
+class CurrentElementSelector(XPathSelector):
+    def __init__(self):
+        super(CurrentElementSelector, self).__init__()
+
 
 class AttributeNameSelector(XPathSelector):
     def __init__(self, attributeName):
@@ -96,8 +100,10 @@ class XPathParser(object):
         expression = XPathExpression()
 
         if cut(xPath, marker.p, 1) == "/":
-            marker.p += 1
             expression.selectors.append(RootElementSelector())
+        elif cut(xPath, marker.p, 1) == ".":
+            marker.p += 1
+            expression.selectors.append(CurrentElementSelector())
 
         while marker.p < len(xPath):
 
