@@ -17,8 +17,10 @@ class ElementNameSelector(XPathSelector):
 
 
 class SubelementsSelector(XPathSelector):
-    def __init__(self):
+    def __init__(self, anyDepth=False):
         super(SubelementsSelector, self).__init__()
+
+        self.anyDepth = anyDepth
 
 
 class RootElementSelector(XPathSelector):
@@ -29,6 +31,18 @@ class RootElementSelector(XPathSelector):
 class SuperelementSelector(XPathSelector):
     def __init__(self):
         super(SuperelementSelector, self).__init__()
+
+
+class AttributeNameSelector(XPathSelector):
+    def __init__(self, attributeName):
+        super(AttributeNameSelector, self).__init__()
+
+        self.attributeName = attributeName
+
+
+class AttributesSelector(XPathSelector):
+    def __init__(self):
+        super(AttributesSelector, self).__init__()
 
 
 class Marker(object):
@@ -81,14 +95,90 @@ class XPathParser(object):
 
         expression = XPathExpression()
 
+        if cut(xPath, marker.p, 1) == "/":
+            marker.p += 1
+            expression.selectors.append(RootElementSelector())
+
         while marker.p < len(xPath):
 
-            if cut(xPath, marker.p, 2) == "//":
-                pass
-
-            if cut(xPath, marker.p, 1) == "/":
-                expression.selectors.append(SubelementsSelector())
-                marker.p += 1
+            if cut(xPath, marker.p, 2) == "..":
+                marker.p += 2
+                expression.selectors.append(SuperelementSelector())
                 continue
 
+            if cut(xPath, marker.p, 2) == "//":
+                marker.p += 2
+                elementName = self._getElementName(xPath, marker)
+
+                if elementName != None:
+                    expression.selectors.append(SubelementsSelector(True))
+                    expression.selectors.append(
+                        ElementNameSelector(elementName))
+                    continue
+                elif cut(xPath, marker.p, 1) == "*":
+                    expression.selectors.append(SubelementsSelector(True))
+                    continue
+
+            if cut(xPath, marker.p, 1) == "/":
+                marker.p += 1
+                elementName = self._getElementName(xPath, marker)
+
+                if elementName != None:
+                    expression.selectors.append(SubelementsSelector(False))
+                    expression.selectors.append(
+                        ElementNameSelector(elementName))
+                    continue
+                elif cut(xPath, marker.p, 1) == "*":
+                    expression.selectors.append(SubelementsSelector(False))
+                    continue
+
+            if cut(xPath, marker.p, 1) == "@":
+                marker.p += 1
+                attributeName = self._getAttributeName(xPath, marker)
+
+                if attributeName != None:
+                    expression.selectors.append(AttributesSelector())
+                    expression.selectors.append(
+                        AttributeNameSelector(attributeName))
+                    continue
+                elif cut(xPath, marker.p, 1) == "*":
+                    expression.selectors.append(AttributesSelector())
+                    continue
+
         return expression
+
+    def _getElementName(self, inputText, marker):
+        m = marker
+        t = ""
+
+        while m.p < len(inputText):
+            c = cut(inputText, m.p)
+
+            if c in XMLParser._elementNameCharacters:
+                t += c
+                m.p += 1
+            else:
+                break
+
+        if len(t) == 0:
+            return None
+
+        return t
+
+    def _getAttributeName(self, inputText, marker):
+        m = marker
+        t = ""
+
+        while m.p < len(inputText):
+            c = cut(inputText, m.p)
+
+            if c in XMLParser._attributeNameCharacters:
+                t += c
+                m.p += 1
+            else:
+                break
+
+        if len(t) == 0:
+            return None
+
+        return t
