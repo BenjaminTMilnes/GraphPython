@@ -4,6 +4,36 @@ class XPathExpression(object):
     def __init__(self):
         self.selectors = []
 
+    def __str__(self):
+        t = ""
+
+        for index, selector in enumerate(self.selectors):
+            notLast = index < len(self.selectors) - 1
+            nextSelector = self.selectors[index + 1] if notLast else None 
+
+            if isinstance(selector, ElementNameSelector):
+                t += selector.elementName 
+            if isinstance(selector, SubelementsSelector):
+                if not isinstance(nextSelector, ElementNameSelector):
+                    t += "//*" if selector.anyDepth else "/*" 
+                else:
+                    t += "//" if selector.anyDepth else "/" 
+            if isinstance(selector, RootElementSelector):
+                t += "/" 
+            if isinstance(selector, SuperelementSelector):
+                t += ".." 
+            if isinstance(selector, CurrentElementSelector):
+                t += "."  
+            if isinstance(selector, AttributesSelector):
+                if not isinstance(nextSelector, AttributeNameSelector):
+                    t += "@*" 
+                else:
+                    t += "@"
+            if isinstance(selector, AttributeNameSelector):
+                t += selector.attributeName 
+
+        return t 
+
 
 class XPathSelector(object):
     pass
@@ -31,6 +61,7 @@ class RootElementSelector(XPathSelector):
 class SuperelementSelector(XPathSelector):
     def __init__(self):
         super(SuperelementSelector, self).__init__()
+
 
 class CurrentElementSelector(XPathSelector):
     def __init__(self):
@@ -99,9 +130,7 @@ class XPathParser(object):
 
         expression = XPathExpression()
 
-        if cut(xPath, marker.p, 1) == "/":
-            expression.selectors.append(RootElementSelector())
-        elif cut(xPath, marker.p, 1) == ".":
+        if cut(xPath, marker.p, 1) == ".":
             marker.p += 1
             expression.selectors.append(CurrentElementSelector())
 
@@ -118,11 +147,11 @@ class XPathParser(object):
 
                 if elementName != None:
                     expression.selectors.append(SubelementsSelector(True))
-                    expression.selectors.append(
-                        ElementNameSelector(elementName))
+                    expression.selectors.append(ElementNameSelector(elementName))
                     continue
                 elif cut(xPath, marker.p, 1) == "*":
                     expression.selectors.append(SubelementsSelector(True))
+                    marker.p += 1
                     continue
 
             if cut(xPath, marker.p, 1) == "/":
@@ -130,12 +159,16 @@ class XPathParser(object):
                 elementName = self._getElementName(xPath, marker)
 
                 if elementName != None:
-                    expression.selectors.append(SubelementsSelector(False))
-                    expression.selectors.append(
-                        ElementNameSelector(elementName))
+                    if len(expression.selectors) == 0:
+                        expression.selectors.append(RootElementSelector())
+                    else:
+                        expression.selectors.append(SubelementsSelector(False))
+
+                    expression.selectors.append(ElementNameSelector(elementName))
                     continue
                 elif cut(xPath, marker.p, 1) == "*":
                     expression.selectors.append(SubelementsSelector(False))
+                    marker.p += 1
                     continue
 
             if cut(xPath, marker.p, 1) == "@":
@@ -144,12 +177,14 @@ class XPathParser(object):
 
                 if attributeName != None:
                     expression.selectors.append(AttributesSelector())
-                    expression.selectors.append(
-                        AttributeNameSelector(attributeName))
+                    expression.selectors.append(AttributeNameSelector(attributeName))
                     continue
                 elif cut(xPath, marker.p, 1) == "*":
                     expression.selectors.append(AttributesSelector())
+                    marker.p += 1
                     continue
+
+            raise XPathParsingError("Could not parse XPath expression at position {}, '{}'.".format(marker.p, xPath[marker.p: marker.p + 20]))
 
         return expression
 
@@ -160,7 +195,7 @@ class XPathParser(object):
         while m.p < len(inputText):
             c = cut(inputText, m.p)
 
-            if c in XMLParser._elementNameCharacters:
+            if c in XPathParser._elementNameCharacters:
                 t += c
                 m.p += 1
             else:
@@ -178,7 +213,7 @@ class XPathParser(object):
         while m.p < len(inputText):
             c = cut(inputText, m.p)
 
-            if c in XMLParser._attributeNameCharacters:
+            if c in XPathParser._attributeNameCharacters:
                 t += c
                 m.p += 1
             else:
@@ -188,3 +223,46 @@ class XPathParser(object):
             return None
 
         return t
+
+parser = XPathParser()
+
+class XPathResolver(object):
+
+    def applyXPathToElement(self, element, xpath):
+        expression = parser.parseXPath(xpath)
+
+        return self._applyExpressionToList([element], expression)
+
+    def _applyExpressionToList(self, _list, expression):
+
+        while len(expression.selectors) > 0:
+            _list = self._applySelectorToList(_list, expression.selectors.pop(0))
+
+        return _list 
+
+    def _applySelectorToList(self, _list, selector):
+        if isinstance(selector, ElementNameSelector):
+            return [element for element in _list if element.name == selector.elementName]
+
+        if isinstance(selector, SubelementsSelector):
+            subelements = []
+
+            for element in _list:
+                if hasattr(element, "subelements"):
+                    subelements += element.subelements 
+
+            return subelements 
+
+        if isinstance(selector, AttributesSelector):
+            attributes = []
+
+            for element in _list:
+                if hasattr(element, "attributes"):
+                    attributes += element.attributes 
+
+            return attributes 
+
+        if isinstance(selector, AttributeNameSelector):
+            return [attribute for attribute in _list if attribute.name == selector.attributeName]
+
+resolver = XPathResolver()

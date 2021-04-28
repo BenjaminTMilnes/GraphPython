@@ -65,7 +65,7 @@ class TestXML(unittest.TestCase):
     def test_parse_example_1(self):
         parser = XMLParser()
 
-        d = parser.parseFromFile("examples/example1.graphe.xml")
+        d = parser.parseFromFile("examples/example1.graph.xml")
 
         self.assertEqual(d.root.name, "document")
         self.assertEqual(d.root.getAttributeValue("version"), "0.1")
@@ -79,8 +79,8 @@ class TestXML(unittest.TestCase):
         self.assertEqual(d.root.subelements[6].name, "keywords")
         self.assertEqual(d.root.subelements[6].innerText, "tragedy, Plagueis, Darth Plagueis, Sith")
 
-        self.assertEqual(len(d.root.getElementsByName("contributor")), 1)
-        self.assertEqual(d.root.getElementsByName("contributor")[0].getElementsByName("name")[0].innerText, "Sheev Palpatine")
+        self.assertEqual(len(d.root.getSubelementsByName("contributor")), 1)
+        self.assertEqual(d.root.getSubelementsByName("contributor")[0].getSubelementsByName("name")[0].innerText, "Sheev Palpatine")
 
 
 if __name__ == "__main__":

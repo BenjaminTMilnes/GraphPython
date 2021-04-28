@@ -33,3 +33,11 @@ This repository contains a Python implementation of Graph.
 </document>
 
 ```
+
+## How to run the unit tests
+
+```bash
+
+py -m unittest discover
+
+```

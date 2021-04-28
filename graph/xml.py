@@ -1,4 +1,5 @@
 import re
+import graph.xpath 
 
 
 class XMLDocument(object):
@@ -53,6 +54,9 @@ class XMLDocument(object):
 
         with open(filePath, "w", encoding="utf-8") as fo:
             fo.write(s)
+            
+    def findByXPath(self, xpath):
+        return graph.xpath.resolver.applyXPathToElement(self.root, xpath)
 
 
 class XMLAttribute(object):
@@ -254,6 +258,9 @@ class XMLElement(object):
                 t += e.innerText
 
         return t
+
+    def findByXPath(self, xpath):
+        return graph.xpath.resolver.applyXPathToElement(self, xpath)
 
 
 class XMLTextElement(object):
