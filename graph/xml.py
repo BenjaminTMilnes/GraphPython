@@ -44,6 +44,8 @@ class XMLDocument(object):
         parser = XMLParser()
 
         document = parser.parseFromFile(filePath)
+        document.root._setDepth()
+        document.root.root = document.root 
 
         return document 
 

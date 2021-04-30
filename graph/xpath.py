@@ -1,3 +1,6 @@
+import logging 
+
+logger = logging.getLogger(__name__)
 
 
 class XPathExpression(object):
@@ -19,7 +22,7 @@ class XPathExpression(object):
                 else:
                     t += "//" if selector.anyDepth else "/" 
             if isinstance(selector, RootElementSelector):
-                t += "/" 
+                t += "" 
             if isinstance(selector, SuperelementSelector):
                 t += ".." 
             if isinstance(selector, CurrentElementSelector):
@@ -161,9 +164,8 @@ class XPathParser(object):
                 if elementName != None:
                     if len(expression.selectors) == 0:
                         expression.selectors.append(RootElementSelector())
-                    else:
-                        expression.selectors.append(SubelementsSelector(False))
-
+        
+                    expression.selectors.append(SubelementsSelector(False))
                     expression.selectors.append(ElementNameSelector(elementName))
                     continue
                 elif cut(xPath, marker.p, 1) == "*":
@@ -229,20 +231,31 @@ parser = XPathParser()
 class XPathResolver(object):
 
     def applyXPathToElement(self, element, xpath):
+        logger.debug("Applying XPath '{}' to {}.".format(xpath, element))
+
         expression = parser.parseXPath(xpath)
+
+        logger.debug("Parsed XPath as '{}'.".format(expression))
 
         return self._applyExpressionToList([element], expression)
 
     def _applyExpressionToList(self, _list, expression):
 
         while len(expression.selectors) > 0:
-            _list = self._applySelectorToList(_list, expression.selectors.pop(0))
+            firstSelector = expression.selectors.pop(0)
+
+            logger.debug("Applying selector {}.".format(firstSelector))
+
+            _list = self._applySelectorToList(_list, firstSelector)
+
+            logger.debug("List now has {} items.".format(len(_list)))
+            logger.debug("List: {}.".format([i.name for i in _list]))
 
         return _list 
 
     def _applySelectorToList(self, _list, selector):
         if isinstance(selector, ElementNameSelector):
-            return [element for element in _list if element.name == selector.elementName]
+            return [element for element in _list if hasattr(element, "name") and element.name == selector.elementName]
 
         if isinstance(selector, SubelementsSelector):
             subelements = []
@@ -264,5 +277,8 @@ class XPathResolver(object):
 
         if isinstance(selector, AttributeNameSelector):
             return [attribute for attribute in _list if attribute.name == selector.attributeName]
+
+        if isinstance(selector, RootElementSelector):
+            return [_list[0].root]
 
 resolver = XPathResolver()

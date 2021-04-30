@@ -3,17 +3,20 @@ from parameterized import parameterized
 
 from graph.xml import *
 
+import logging 
+
 
 class TestXPath(unittest.TestCase):
+    logging.basicConfig(level=logging.DEBUG)
 
     @parameterized.expand([
-        ["/document/title", 4],
-        ["/document/sections/section", 6],
-        ["/document/sections/*", 5],
-        ["/document//p", 4],
-        ["/document//section//p", 6],
-        ["/document//section@ptr", 6],
-        ["/document//section@*", 5],
+        ["/document/title", 5],
+        ["/document/sections/section", 7],
+        ["/document/sections/*", 6],
+        ["/document//p", 5],
+        ["/document//section//p", 7],
+        ["/document//section@ptr", 7],
+        ["/document//section@*", 6],
     ])
     def test_parse_xpath(self, xpath, numberOfSelectors):
         expression = graph.xpath.parser.parseXPath(xpath)
@@ -22,13 +25,10 @@ class TestXPath(unittest.TestCase):
         self.assertEqual(str(expression), xpath)
 
 
-    @parameterized.expand([
-        ["/document/title", "The Tragedy of Darth Plagueis the Wise"],
-    ])
-    def test_xpath(self, xpath, value):
+    def test_xpath(self):
         d = XMLDocument.load("examples/example1.graph.xml")
 
-        #self.assertEqual(d.findByXPath(xpath)[0].innerText, value)
+        self.assertEqual(d.findByXPath("/document/title")[0].innerText, "The Tragedy of Darth Plagueis the Wise")
 
 
 if __name__ == "__main__":
