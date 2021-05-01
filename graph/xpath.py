@@ -22,7 +22,7 @@ class XPathExpression(object):
                 else:
                     t += "//" if selector.anyDepth else "/" 
             if isinstance(selector, RootElementSelector):
-                t += "" 
+                t += "/" 
             if isinstance(selector, SuperelementSelector):
                 t += ".." 
             if isinstance(selector, CurrentElementSelector):
@@ -138,7 +138,7 @@ class XPathParser(object):
             expression.selectors.append(CurrentElementSelector())
 
         while marker.p < len(xPath):
-
+            """
             if cut(xPath, marker.p, 2) == "..":
                 marker.p += 2
                 expression.selectors.append(SuperelementSelector())
@@ -149,14 +149,19 @@ class XPathParser(object):
                 elementName = self._getElementName(xPath, marker)
 
                 if elementName != None:
-                    expression.selectors.append(SubelementsSelector(True))
+                    if len(expression.selectors) == 0:
+                        expression.selectors.append(RootElementSelector())
+                    else:    
+                        expression.selectors.append(SubelementsSelector(True))
+
                     expression.selectors.append(ElementNameSelector(elementName))
+                    marker.p += len(elementName)
                     continue
                 elif cut(xPath, marker.p, 1) == "*":
                     expression.selectors.append(SubelementsSelector(True))
                     marker.p += 1
                     continue
-
+            """
             if cut(xPath, marker.p, 1) == "/":
                 marker.p += 1
                 elementName = self._getElementName(xPath, marker)
@@ -164,15 +169,24 @@ class XPathParser(object):
                 if elementName != None:
                     if len(expression.selectors) == 0:
                         expression.selectors.append(RootElementSelector())
-        
-                    expression.selectors.append(SubelementsSelector(False))
+                    else:    
+                        expression.selectors.append(SubelementsSelector(False))
+
                     expression.selectors.append(ElementNameSelector(elementName))
+                    marker.p += len(elementName)
                     continue
                 elif cut(xPath, marker.p, 1) == "*":
+                    if len(expression.selectors) == 0:
+                        expression.selectors.append(RootElementSelector())
+
                     expression.selectors.append(SubelementsSelector(False))
                     marker.p += 1
                     continue
-
+                elif marker.p == len(xPath):
+                    if len(expression.selectors) == 0:
+                        expression.selectors.append(RootElementSelector())
+                    continue 
+            """
             if cut(xPath, marker.p, 1) == "@":
                 marker.p += 1
                 attributeName = self._getAttributeName(xPath, marker)
@@ -180,11 +194,13 @@ class XPathParser(object):
                 if attributeName != None:
                     expression.selectors.append(AttributesSelector())
                     expression.selectors.append(AttributeNameSelector(attributeName))
+                    marker.p += len(attributeName)
                     continue
                 elif cut(xPath, marker.p, 1) == "*":
                     expression.selectors.append(AttributesSelector())
                     marker.p += 1
                     continue
+            """
 
             raise XPathParsingError("Could not parse XPath expression at position {}, '{}'.".format(marker.p, xPath[marker.p: marker.p + 20]))
 
