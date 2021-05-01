@@ -301,6 +301,28 @@ class XMLComment(object):
         self.depth = depth 
 
 
+class XMLCDataSection(object):
+    """
+    Represents an XML CData section.
+
+    Attributes
+    ----------
+    cdata : str
+        The data of this CData section.
+    """
+    def __init__(self, cdata = ""):
+        self.document = None
+        self.root = None
+        self.superelement = None
+
+        self.depth = 0
+
+        self.cdata = cdata 
+
+    def _setDepth(self, depth=0):
+        self.depth = depth 
+
+
 class XMLExporter(object):
     def __init__(self):
         pass
@@ -369,6 +391,12 @@ class XMLExporter(object):
             raise ValueError("XML comments cannot have '--' in them.")
 
         return "<!-- {} -->".format(comment.text)
+        
+    def exportCDataSection(self, cDataSection):
+        if cDataSection.find("]]>") < 0:
+            raise ValueError("XML CData sections cannot have ']]>' in them.")
+
+        return "<![CDATA[ {} ]]>".format(cDataSection.cdata)
 
 
 class Marker(object):
@@ -484,6 +512,30 @@ class XMLParser(object):
 
         c = XMLComment()
         c.text = inputText[commentStart, commentEnd].strip()
+
+        m.p += 3
+        marker.p = m.p 
+
+        return c 
+        
+    def _getCDataSection(self, inputText, marker):
+        m = marker.copy()
+
+        if self._expect("<![CDATA[", inputText, m) == False:
+            return None 
+
+        cDataStart = m.p
+
+        while m.p < len(inputText) - 2:
+            if cut(inputText, m.p, 3) == "]]>":
+                break 
+
+            m.p += 1
+
+        cDataEnd = m.p 
+
+        c = XMLCDataSection()
+        c.text = inputText[cDataStart, cDataEnd].strip()
 
         m.p += 3
         marker.p = m.p 
