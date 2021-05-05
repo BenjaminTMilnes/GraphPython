@@ -162,7 +162,7 @@ class XPathParser(object):
                     
                     if len(expression.selectors) == 0:
                         expression.selectors.append(RootElementSelector())
-                        
+
                     expression.selectors.append(SubelementsSelector(True))
                     continue
             
@@ -270,7 +270,7 @@ class XPathResolver(object):
             _list = self._applySelectorToList(_list, firstSelector)
 
             logger.debug("List now has {} items.".format(len(_list)))
-            logger.debug("List: {}.".format([i.name for i in _list]))
+            logger.debug("List: {}.".format([(i.name if hasattr(i, "name") else i.text) for i in _list]))
 
         return _list 
 
@@ -284,6 +284,8 @@ class XPathResolver(object):
             for element in _list:
                 if hasattr(element, "subelements"):
                     subelements += element.subelements 
+
+            subelements = [element for element in subelements if hasattr(element, "name")]
 
             return subelements 
 

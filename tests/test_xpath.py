@@ -158,7 +158,6 @@ class TestXPath(unittest.TestCase):
         self.assertEqual(expression.selectors[5].attributeName, "ptr")
         self.assertEqual(str(expression), xpath)
 
-"""
     def test_xpath_1(self):
         d = XMLDocument.load("examples/example1.graph.xml")
 
@@ -178,7 +177,6 @@ class TestXPath(unittest.TestCase):
         d = XMLDocument.load("examples/example1.graph.xml")
 
         self.assertEqual(d.findByXPath("/document/title")[0].innerText, "The Tragedy of Darth Plagueis the Wise")
-"""
 
 
 if __name__ == "__main__":
