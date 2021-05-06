@@ -83,6 +83,22 @@ class AttributesSelector(XPathSelector):
         super(AttributesSelector, self).__init__()
 
 
+class PredicateSelector(XPathSelector):
+    def __init__(self):
+        super(PredicateSelector, self).__init__()
+
+        self.predicate = None 
+
+
+class XPathPredicate(object):
+    pass 
+
+
+class XPathPositionPredicate(XPathPredicate):
+    def __init__(self):
+        super(XPathPositionPredicate, self).__init__()
+
+
 class Marker(object):
     def __init__(self):
         self.position = 0
