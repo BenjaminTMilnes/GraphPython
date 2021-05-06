@@ -20,6 +20,26 @@ class TestXPath(unittest.TestCase):
         ["/aaa/aaa@bbb@bbb"],
         ["/aaa/aaa@bbb@bbb@bbb"],
         ["..."],
+        ["...."],
+        ["....."],
+        ["/aaa//aaa/../aaa/.../aaa"],
+        ["\\"],
+        ["\\aaa"],
+        ["\\aaa\\"],
+        ["\\\\"],
+        ["\\\\aaa"],
+        ["\\\\aaa\\\\"],
+        ["/aaa#bbb"],
+        ["/aaa!bbb"],
+        ["/aaa?bbb"],
+        ["/aaa£bbb"],
+        ["/aaa$bbb"],
+        ["/aaa^bbb"],
+        ["/aaa&bbb"],
+        ["/aaa=bbb"],
+        ["/aaa:bbb"],
+        ["/aaa;bbb"],
+        ["/aaa~bbb"],
     ])
     def test_invalid_xpath(self, xpath):
         with self.assertRaises(graph.xpath.XPathParsingError) as context:
@@ -193,6 +213,11 @@ class TestXPath(unittest.TestCase):
         d = XMLDocument.load("examples/example1.graph.xml")
 
         self.assertEqual(d.findByXPath("/document/title")[0].innerText, "The Tragedy of Darth Plagueis the Wise")
+        
+    def test_xpath_5(self):
+        d = XMLDocument.load("examples/example1.graph.xml")
+
+        self.assertEqual(d.findByXPath("/document@version")[0].value, "0.1")
 
 
 if __name__ == "__main__":
