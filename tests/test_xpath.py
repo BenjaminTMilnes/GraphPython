@@ -9,6 +9,22 @@ import logging
 class TestXPath(unittest.TestCase):
     logging.basicConfig(level=logging.DEBUG)
 
+    @parameterized.expand([
+        ["///"],
+        ["////"],
+        ["/////"],
+        ["/aaa///aaa"],
+        ["/aaa//aaa/aaa//aaa///aaa"],
+        ["//@@"],
+        ["//@@@"],
+        ["/aaa/aaa@bbb@bbb"],
+        ["/aaa/aaa@bbb@bbb@bbb"],
+        ["..."],
+    ])
+    def test_invalid_xpath(self, xpath):
+        with self.assertRaises(graph.xpath.XPathParsingError) as context:
+            graph.xpath.parser.parseXPath(xpath)
+
     def test_parse_xpath_2(self):
         xpath = "/"
         expression = graph.xpath.parser.parseXPath(xpath)

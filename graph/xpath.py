@@ -128,22 +128,33 @@ class XPathParser(object):
         else:
             return False
 
+    def _raiseParsingError(self, xPath, marker):
+        raise XPathParsingError("Could not parse XPath expression at position {}, '{}'.".format(marker.p, xPath[marker.p: marker.p + 20]))
+
     def parseXPath(self, xPath):
         marker = Marker()
 
         expression = XPathExpression()
+        hasSelectedAttributes = False
 
         if cut(xPath, marker.p) == ".":
             marker.p += 1
             expression.selectors.append(CurrentElementSelector())
+        
+            if cut(xPath, marker.p) == ".":
+                self._raiseParsingError(xPath, marker)
 
         while marker.p < len(xPath):
-            """
+            
             if cut(xPath, marker.p, 2) == "..":
                 marker.p += 2
                 expression.selectors.append(SuperelementSelector())
+
+                if cut(xPath, marker.p) == ".":
+                    self._raiseParsingError(xPath, marker)
+
                 continue
-            """
+            
             if cut(xPath, marker.p, 2) == "//":
                 marker.p += 2
 
@@ -165,6 +176,10 @@ class XPathParser(object):
 
                     expression.selectors.append(SubelementsSelector(True))
                     continue
+                elif cut(xPath, marker.p) == "@":
+                    continue
+                else:
+                    self._raiseParsingError(xPath, marker)
             
             if cut(xPath, marker.p) == "/":
                 marker.p += 1
@@ -193,7 +208,11 @@ class XPathParser(object):
                     continue 
             
             if cut(xPath, marker.p) == "@":
+                if hasSelectedAttributes:
+                    self._raiseParsingError(xPath, marker)
+
                 marker.p += 1
+                hasSelectedAttributes = True 
 
                 attributeName = self._getAttributeName(xPath, marker)
 
@@ -206,8 +225,10 @@ class XPathParser(object):
 
                     expression.selectors.append(AttributesSelector())
                     continue
+                else:
+                    self._raiseParsingError(xPath, marker)
             
-            raise XPathParsingError("Could not parse XPath expression at position {}, '{}'.".format(marker.p, xPath[marker.p: marker.p + 20]))
+            self._raiseParsingError(xPath, marker)
 
         return expression
 
