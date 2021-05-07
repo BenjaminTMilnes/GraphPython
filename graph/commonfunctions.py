@@ -6,6 +6,8 @@ from graph.md import *
 from graph.txt import *
 from graph.html import *
 from graph.pdf import *
+import json
+import datetime 
 import logging
 
 def compileGraphDocument(graphFilePath, morphFilePath, outputFilePath, outputFormat = "docx"):
@@ -41,3 +43,15 @@ def compileGraphDocument(graphFilePath, morphFilePath, outputFilePath, outputFor
         exporter = HTMLExporter()
         logging.info("Exporting document as a HTML (.html) file to {}.".format(outputFilePath))
         exporter.exportDocument(graphDocument, outputFilePath)
+    if outputFormat == "json":
+        logging.info("Exporting document as a JSON (.json) file to {}.".format(outputFilePath))
+
+        def object_default(o):
+            if isinstance(o, datetime.datetime):
+                return o.strftime("%Y.%m.%d %H:%M:%S")
+            if isinstance(o, object):
+                return o.__dict__
+            raise TypeError(o)
+            
+        with open(outputFilePath, "w") as fileObject:
+            json.dump(graphDocument, fileObject, indent=4, default=object_default)

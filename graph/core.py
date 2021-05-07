@@ -344,7 +344,7 @@ class GCitation(GContentElement):
 
 class GTemplate(GContentElement):
     def __init__(self):
-        super(GContentElement, self).__init__()
+        super(GTemplate, self).__init__()
 
         self.reference = ""
 
@@ -645,7 +645,7 @@ class GImporter(object):
             s.styleClass = section.getAttributeValue("style-class")
             s.language = self._getAttributeValueOfSynonymousAttributes(section, ["l", "language"])
             s.pageTemplateReference = self._getAttributeValueOfSynonymousAttributes(section, ["ptr", "page-template-reference"])
-            s.exclude = True if  section.getAttributeValue("exclude") == "yes" else False
+            s.exclude = True if section.getAttributeValue("exclude") == "yes" else False
 
             s.subelements = self._getPageElementsFromXML(section.subelements)
 
@@ -839,8 +839,10 @@ class StyleResolver(object):
 
         sections = document.sections
         templates = document.templates
+        headers = [template.header for template in document.templates]
+        footers = [template.footer for template in document.templates]
 
-        allElements = self.linearise(sections) + self.linearise(templates)
+        allElements = self.linearise(sections) + self.linearise(templates) + self.linearise(headers) + self.linearise(footers)
 
         while len(styleRule.selectors) > 0:
             selector = styleRule.selectors.pop(0)
