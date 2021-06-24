@@ -17,7 +17,7 @@ class PDFDate(object):
         self.value = value
 
 
-class PDFNumber (object):
+class PDFNumber(object):
     def __init__(self, value):
         self.value = value
 
@@ -62,10 +62,48 @@ class PDFStreamObject(PDFIndirectObject):
         }
 
 
+class PDFGraphicsStreamContext(object):
+    def __init__(self, streamObject):
+        self._streamObject = streamObject
+
+        if self._streamObject.data == None:
+            self._streamObject.data = ""
+
+    def _setStreamObjectLength(self):
+        self._streamObject.length = len(self._streamObject.data)
+
+    def setStrokeColourRGB(self, r, g, b):
+        self._streamObject.data += "/DeviceRGB CS {} {} {} SC".format(r, g, b)
+        self._setStreamObjectLength()
+
+    def setStrokeColourCMYK(self, c, m, y, k):
+        self._streamObject.data += "/DeviceCMYK CS {} {} {} {} SC".format(c, m, y, k)
+        self._setStreamObjectLength()
+        
+    def setLineWidth(self, lineWidth):
+        self._streamObject.data += "{} w ".format(lineWidth)
+        self._setStreamObjectLength()
+        
+    def moveTo(self, x, y):
+        self._streamObject.data += "{} {} m ".format(x, y)
+        self._setStreamObjectLength()
+
+    def lineTo(self, x, y):
+        self._streamObject.data += "{} {} l ".format(x, y)
+        self._setStreamObjectLength()
+
+    def applyStroke(self):
+        self._streamObject.data += "S "
+        self._setStreamObjectLength()
+
+
+
 class PDFTextStreamContext(object):
     def __init__(self, streamObject):
         self._streamObject = streamObject
-        self._streamObject.data = ""
+
+        if self._streamObject.data == None:
+            self._streamObject.data = ""
 
     def _setStreamObjectLength(self):
         self._streamObject.length = len(self._streamObject.data)
@@ -119,7 +157,7 @@ class PDFTextStreamContext(object):
         self._setStreamObjectLength()
 
 
-class PDFDocument (object):
+class PDFDocument(object):
     def __init__(self):
         self.header = PDFHeader()
         self.header.document = self
@@ -292,7 +330,7 @@ class PDFPageObject(PDFIndirectObject):
         self.resources = {
             "Font": {
                 "F0": {
-                    "BaseFont": PDFName("EBGaramond"),
+                    "BaseFont": PDFName("Times-Roman"),
                     "Type": PDFName("Font"),
                     "Subtype": PDFName("Type1")
                 }
@@ -598,6 +636,7 @@ class PDFDocumentContext(object):
         self._pdfPages = None
         self._currentPage = None
         self._currentContentStream = None
+        self._currentGraphicsStreamContext = None 
         self._currentTextStreamContext = None
 
     def newDocument(self):
@@ -616,6 +655,7 @@ class PDFDocumentContext(object):
         self._currentPage.mediaBoxHeight = pageHeight
 
         self._currentContentStream = PDFStreamObject()
+        self._currentGraphicsStreamContext = PDFGraphicsStreamContext(self._currentContentStream)
         self._currentTextStreamContext = PDFTextStreamContext(self._currentContentStream)
 
         self._pdfPages.children.append(self._currentPage)
@@ -628,6 +668,12 @@ class PDFDocumentContext(object):
         pageHeight = self._currentPage.mediaBoxHeight
 
         return pageHeight - y
+
+    def drawLine(self, x1, y1, x2, y2, lineWidth = 1):
+        self._currentGraphicsStreamContext.setLineWidth(lineWidth)
+        self._currentGraphicsStreamContext.moveTo(x1, y1)
+        self._currentGraphicsStreamContext.lineTo(x2, y2)
+        self._currentGraphicsStreamContext.applyStroke()
 
     def drawText(self, text, x, y, fontName="Times", fontHeight=12):
         self._currentTextStreamContext.beginTextBlock()
